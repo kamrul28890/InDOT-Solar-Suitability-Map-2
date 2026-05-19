@@ -1,0 +1,31 @@
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local GIS/source data and project files
+All_Candidate_Sites/
+Facility_Scored/
+ROW_Scored/
+*.pdf
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.sbn
+*.sbx
+*.shp.xml
+*.aprx
+*.atbx
+*.gdb/
+
+# Local planning notes and generated documents
+docs/
+Implementation_Plan_SPR4862*.md
+conversation_with_Dr.Chang.txt
+
+# LaTeX/build artifacts
+*.aux
+*.log
+*.out
+*.toc
