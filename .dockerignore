@@ -1,0 +1,15 @@
+.git
+.venv
+node_modules
+dist
+__pycache__
+.pytest_cache
+r_outputs
+All_Candidate_Sites
+Facility_Scored
+ROW_Scored
+*.pdf
+*.aux
+*.log
+*.out
+*.toc

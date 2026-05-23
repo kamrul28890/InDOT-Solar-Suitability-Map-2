@@ -1,6 +1,8 @@
 .venv/
 __pycache__/
 *.py[cod]
+node_modules/
+dist/
 
 # Local GIS/source data and project files
 All_Candidate_Sites/
@@ -20,7 +22,10 @@ ROW_Scored/
 *.gdb/
 
 # Local planning notes and generated documents
-docs/
+docs/*
+!docs/*.md
+!docs/.gitkeep
+r_outputs/
 Implementation_Plan_SPR4862*.md
 conversation_with_Dr.Chang.txt
 

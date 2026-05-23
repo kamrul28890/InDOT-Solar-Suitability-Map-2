@@ -1,0 +1,73 @@
+{
+  "project": {
+    "name": "INDOT Solar Suitability Map",
+    "default_crs": "EPSG:4326"
+  },
+  "datasets": {
+    "all_candidate_sites": {
+      "title": "All Candidate Sites",
+      "source": "All_Candidate_Sites/All_Candidate_Sites_Final.shp",
+      "output": "all_candidate_sites.geojson",
+      "public": true,
+      "layer_type": "candidate"
+    },
+    "facility_scored": {
+      "title": "Scored INDOT Facilities",
+      "source": "Facility_Scored/solar_potential_scored_indotfacility.shp",
+      "output": "facility_scored.geojson",
+      "public": true,
+      "layer_type": "facility"
+    },
+    "row_scored": {
+      "title": "Scored Right-of-Way Parcels",
+      "source": "ROW_Scored/solar_potential_scored_interchange.shp",
+      "output": "row_scored.geojson",
+      "public": true,
+      "layer_type": "row"
+    }
+  },
+  "identity_fields": [
+    "SPR_ID",
+    "Site_typ",
+    "Unit_Site",
+    "layer"
+  ],
+  "display_fields": [
+    "SPR_ID",
+    "Site_typ",
+    "Unit_Site",
+    "layer",
+    "Volt_Class",
+    "Flood_Zone",
+    "SlopeMean",
+    "Solar_Mean",
+    "NTran_DIST",
+    "Shape_Area"
+  ],
+  "score_fields": [
+    "sol_s",
+    "slp_s",
+    "trn_s",
+    "evp_s",
+    "dem_s",
+    "fld_s",
+    "lc_s"
+  ],
+  "land_cover_fields": [
+    "DevOpe_21",
+    "DevLowI_22",
+    "DDevMed_23",
+    "DDevHig_24",
+    "DecFor_41",
+    "GrasHe_71",
+    "OpenW_11",
+    "EverFor_42",
+    "MixFor_43",
+    "SShrub_52",
+    "PasHay_81",
+    "CultCr_82",
+    "welan_90",
+    "EmerW_95",
+    "Barre_31"
+  ]
+}
