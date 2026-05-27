@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { GeoJSON, MapContainer, TileLayer } from 'react-leaflet';
-import { Filter, Layers, RefreshCw, Search } from 'lucide-react';
+import { GeoJSON, MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { Filter, Layers, MapPin, Moon, RefreshCw, Search, Sun } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import './styles.css';
 
@@ -65,6 +65,57 @@ function featureMatches(feature, query, minScore) {
   return matchesQuery && matchesScore;
 }
 
+function featureKey(feature, fallbackIndex = 0) {
+  const p = feature.properties;
+  return `${p.dataset}:${p.SPR_ID ?? fallbackIndex}:${p.Unit_Site ?? 'site'}`;
+}
+
+function siteLabel(feature) {
+  const p = feature.properties;
+  return p.Unit_Site || `${p.Site_typ || 'Site'} ${p.SPR_ID ?? ''}`.trim();
+}
+
+function groupFeaturesByLayer(layers, manifest, query, minScore) {
+  const layerTitles = Object.fromEntries((manifest?.layers || []).map((layer) => [layer.name, layer.title]));
+  return Object.entries(layers).map(([name, geojson]) => {
+    const groups = new Map();
+    geojson.features
+      .filter((feature) => featureMatches(feature, query, minScore))
+      .forEach((feature, index) => {
+        const subgroup = feature.properties.layer || feature.properties.Site_typ || 'Unassigned';
+        if (!groups.has(subgroup)) {
+          groups.set(subgroup, []);
+        }
+        groups.get(subgroup).push({ feature, key: featureKey(feature, index) });
+      });
+
+    return {
+      name,
+      title: layerTitles[name] || name,
+      count: Array.from(groups.values()).reduce((sum, features) => sum + features.length, 0),
+      groups: Array.from(groups.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([groupName, features]) => ({
+          name: groupName,
+          features: features.sort((a, b) => siteLabel(a.feature).localeCompare(siteLabel(b.feature))),
+        })),
+    };
+  });
+}
+
+function MapFocus({ selectedSite }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selectedSite) {
+      return;
+    }
+    map.flyTo([selectedSite.latitude, selectedSite.longitude], 14, { duration: 0.8 });
+  }, [map, selectedSite]);
+
+  return null;
+}
+
 function App() {
   const [manifest, setManifest] = useState(null);
   const [stats, setStats] = useState(null);
@@ -77,6 +128,8 @@ function App() {
   const [query, setQuery] = useState('');
   const [minScore, setMinScore] = useState(0);
   const [error, setError] = useState('');
+  const [selectedSite, setSelectedSite] = useState(null);
+  const [theme, setTheme] = useState('light');
 
   useEffect(() => {
     async function load() {
@@ -113,13 +166,42 @@ function App() {
   }, [enabled, layers, minScore, query]);
 
   const visibleCount = visibleLayers.reduce((sum, [, layer]) => sum + layer.features.length, 0);
+  const directoryLayers = useMemo(
+    () => groupFeaturesByLayer(layers, manifest, query, minScore),
+    [layers, manifest, minScore, query]
+  );
+
+  function selectSite(feature, key) {
+    const latitude = Number(feature.properties.center_latitude);
+    const longitude = Number(feature.properties.center_longitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return;
+    }
+    setEnabled((current) => ({ ...current, [feature.properties.dataset]: true }));
+    setSelectedSite({
+      key,
+      latitude,
+      longitude,
+      label: siteLabel(feature),
+    });
+  }
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" data-theme={theme}>
       <aside className="sidebar">
         <header className="app-header">
-          <span className="eyebrow">SPR 4862</span>
-          <h1>INDOT Solar Suitability Map</h1>
+          <div>
+            <span className="eyebrow">SPR 4862</span>
+            <h1>INDOT Solar Suitability Map</h1>
+          </div>
+          <button
+            className="theme-toggle"
+            onClick={() => setTheme((current) => (current === 'light' ? 'dark' : 'light'))}
+            title="Toggle theme"
+            type="button"
+          >
+            {theme === 'light' ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
+          </button>
         </header>
 
         <section className="control-group">
@@ -138,18 +220,51 @@ function App() {
             <Layers size={18} aria-hidden="true" />
             <h2>Layers</h2>
           </div>
-          <div className="layer-list">
-            {(manifest?.layers || []).map((layer) => (
-              <label className="layer-toggle" key={layer.name}>
-                <input
-                  type="checkbox"
-                  checked={enabled[layer.name] ?? false}
-                  onChange={(event) => setEnabled((current) => ({ ...current, [layer.name]: event.target.checked }))}
-                />
-                <span className="swatch" style={{ backgroundColor: layerColors[layer.name] }} />
-                <span>{layer.title}</span>
-                <small>{layer.records}</small>
-              </label>
+          <div className="tree-panel">
+            {directoryLayers.map((layer) => (
+              <details className="tree-node" key={layer.name}>
+                <summary>
+                  <input
+                    type="checkbox"
+                    checked={enabled[layer.name] ?? false}
+                    onChange={(event) => setEnabled((current) => ({ ...current, [layer.name]: event.target.checked }))}
+                    onClick={(event) => event.stopPropagation()}
+                  />
+                  <span className="swatch" style={{ backgroundColor: layerColors[layer.name] }} />
+                  <span>{layer.title}</span>
+                  <small>{layer.count}</small>
+                </summary>
+                <div className="tree-branch">
+                  {layer.groups.map((group) => (
+                    <details className="tree-group" key={`${layer.name}-${group.name}`}>
+                      <summary>
+                        <span>{group.name}</span>
+                        <small>{group.features.length}</small>
+                      </summary>
+                      <div className="site-list">
+                        {group.features.map(({ feature, key }) => (
+                          <button
+                            className={`site-row ${selectedSite?.key === key ? 'is-selected' : ''}`}
+                            key={key}
+                            onClick={() => selectSite(feature, key)}
+                            title={`Zoom to ${siteLabel(feature)}`}
+                            type="button"
+                          >
+                            <MapPin size={15} aria-hidden="true" />
+                            <span>
+                              <strong>{siteLabel(feature)}</strong>
+                              <small>
+                                SPR {feature.properties.SPR_ID ?? 'n/a'} | Score {formatNumber(feature.properties.score_mean, 3)}
+                              </small>
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </details>
+                  ))}
+                  {layer.groups.length === 0 ? <p className="empty-tree">No matching sites</p> : null}
+                </div>
+              </details>
             ))}
           </div>
         </section>
@@ -208,6 +323,7 @@ function App() {
 
       <section className="map-stage" aria-label="Interactive Indiana solar suitability map">
         <MapContainer center={[39.9, -86.2]} zoom={7} minZoom={6} className="map">
+          <MapFocus selectedSite={selectedSite} />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

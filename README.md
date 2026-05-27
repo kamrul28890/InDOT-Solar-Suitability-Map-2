@@ -46,3 +46,13 @@ Open `http://127.0.0.1:5173`.
 ```powershell
 .\scripts\check_project.ps1
 ```
+
+## Windows Sharing Package
+
+Build a click-to-run ZIP for non-technical Windows users:
+
+```powershell
+.\scripts\build_windows_release.ps1
+```
+
+Share `release\INDOT_Solar_Map_Windows.zip`. The recipient unzips it and double-clicks `Run_INDOT_Map.bat`.
