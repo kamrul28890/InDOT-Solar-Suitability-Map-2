@@ -7,7 +7,10 @@
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "check": "vite build"
+    "test": "powershell -ExecutionPolicy Bypass -File scripts/check_project.ps1",
+    "check": "vite build",
+    "check:full": "powershell -ExecutionPolicy Bypass -File scripts/check_project.ps1",
+    "release:windows": "powershell -ExecutionPolicy Bypass -File scripts/build_windows_release.ps1"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

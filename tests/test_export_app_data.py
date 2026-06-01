@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import pytest
+
+pytest.importorskip("geopandas")
 
 from scripts.export_app_data import DEFAULT_CONFIG, export_app_data
 

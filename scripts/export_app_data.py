@@ -92,12 +92,6 @@ def normalize_properties(gdf: gpd.GeoDataFrame, dataset: DatasetConfig, config: 
     if "Long" in gdf.columns:
         normalized["source_longitude"] = gdf["Long"]
 
-    present_scores = [field for field in score_fields if field in normalized.columns]
-    if present_scores:
-        normalized["score_mean"] = normalized[present_scores].mean(axis=1, skipna=True)
-    else:
-        normalized["score_mean"] = None
-
     present_land_cover = [field for field in land_cover_fields if field in normalized.columns]
     if present_land_cover:
         normalized["land_cover_sum"] = normalized[present_land_cover].sum(axis=1, skipna=True)
@@ -144,9 +138,6 @@ def build_stats(gdf: gpd.GeoDataFrame, dataset: DatasetConfig, config: dict[str,
         "fixed_geometries": int((~gdf["source_geometry_valid"]).sum()),
         "score_fields": score_fields,
     }
-    if score_fields:
-        stats["score_mean_min"] = float(gdf["score_mean"].min())
-        stats["score_mean_max"] = float(gdf["score_mean"].max())
     return stats
 
 

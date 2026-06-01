@@ -40,9 +40,7 @@
         "dem_s",
         "fld_s",
         "lc_s"
-      ],
-      "score_mean_min": 0.4485663179651143,
-      "score_mean_max": 0.7403173315135714
+      ]
     },
     {
       "name": "row_scored",
@@ -65,9 +63,7 @@
         "dem_s",
         "fld_s",
         "lc_s"
-      ],
-      "score_mean_min": 0.3721996300016857,
-      "score_mean_max": 0.6955700646554285
+      ]
     }
   ]
 }

@@ -3,9 +3,13 @@ __pycache__/
 *.py[cod]
 node_modules/
 dist/
+build/
+release/
+logs/
 
 # Local GIS/source data and project files
 All_Candidate_Sites/
+Dataset_given/
 Facility_Scored/
 ROW_Scored/
 *.pdf
@@ -25,9 +29,12 @@ ROW_Scored/
 docs/*
 !docs/*.md
 !docs/.gitkeep
+MEETING_*
 r_outputs/
 Implementation_Plan_SPR4862*.md
 conversation_with_Dr.Chang.txt
+scripts/compare_spr_ids.py
+scripts/convert_md_to_pptx.py
 
 # LaTeX/build artifacts
 *.aux

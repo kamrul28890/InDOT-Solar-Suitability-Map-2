@@ -2,12 +2,17 @@
 .venv
 node_modules
 dist
+build
+release
+logs
 __pycache__
 .pytest_cache
 r_outputs
 All_Candidate_Sites
+Dataset_given
 Facility_Scored
 ROW_Scored
+MEETING_*
 *.pdf
 *.aux
 *.log

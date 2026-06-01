@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -10,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(os.environ.get("INDOT_APP_ROOT", Path(__file__).resolve().parents[2])).resolve()
 DATA_DIR = ROOT / "data" / "processed"
 MANIFEST_PATH = DATA_DIR / "manifest.json"
 DIST_DIR = ROOT / "dist"
