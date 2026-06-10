@@ -10,6 +10,7 @@ function App() {
   const [session, setSession] = useState(null);
   const [validation, setValidation] = useState(null);
   const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
 
   async function callApi(path, options = {}) {
     const response = await fetch(path, {
@@ -23,13 +24,38 @@ function App() {
   }
 
   async function importFolder() {
-    setMessage('');
-    const result = await callApi('/api/import', {
-      method: 'POST',
-      body: JSON.stringify({ path: folder }),
-    });
-    setSession(result);
-    setStage(1);
+    try {
+      setBusy(true);
+      setMessage('');
+      const result = await callApi('/api/import', {
+        method: 'POST',
+        body: JSON.stringify({ path: folder }),
+      });
+      setSession(result);
+      setStage(1);
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function chooseFolder() {
+    try {
+      setBusy(true);
+      setMessage('Opening folder picker...');
+      const result = await callApi('/api/browse-folder', { method: 'POST' });
+      if (result.path) {
+        setFolder(result.path);
+        setMessage('Folder selected. Import it to continue.');
+      } else {
+        setMessage('Folder selection was cancelled.');
+      }
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function validateSession() {
@@ -64,7 +90,11 @@ function App() {
             Shapefile project folder
             <input value={folder} onChange={(event) => setFolder(event.target.value)} placeholder="D:\\My Projects\\InDOT\\phase1_map" />
           </label>
-          <button onClick={importFolder} disabled={!folder}>Import Project</button>
+          <div className="actions">
+            <button onClick={chooseFolder} disabled={busy}>Choose Folder</button>
+            <button onClick={importFolder} disabled={!folder || busy}>Import Project</button>
+          </div>
+          {message && <p className="status-message">{message}</p>}
         </section>
       )}
 
@@ -104,4 +134,3 @@ function App() {
 }
 
 createRoot(document.getElementById('root')).render(<App />);
-

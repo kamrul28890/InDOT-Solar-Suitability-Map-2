@@ -55,6 +55,12 @@ button.active {
   background: #164e63;
 }
 
+.actions {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(160px, auto) 1fr;
+}
+
 section {
   display: grid;
   gap: 16px;
@@ -73,4 +79,15 @@ input {
   width: 100%;
   color: #111827;
   background: white;
+}
+
+.status-message {
+  margin: 0;
+  color: #475569;
+}
+
+@media (max-width: 640px) {
+  .actions {
+    grid-template-columns: 1fr;
+  }
 }
