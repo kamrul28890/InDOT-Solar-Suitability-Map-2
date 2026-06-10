@@ -1,0 +1,22 @@
+{
+  "name": "indot-phase2-editor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:frontend": "vite build --config frontend/vite.config.js",
+    "build:map": "vite build --config map_app/vite.config.js",
+    "check": "npm run build:frontend && npm run build:map"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "typescript": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "leaflet": "latest",
+    "react-leaflet": "latest",
+    "lucide-react": "latest"
+  }
+}
+

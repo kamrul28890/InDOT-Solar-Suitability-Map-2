@@ -1,0 +1,148 @@
+\documentclass[10pt]{article}
+
+\usepackage[margin=0.72in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  urlcolor=blue!50!black
+}
+
+\setlist[itemize]{leftmargin=*, itemsep=2pt, topsep=3pt}
+\setlist[enumerate]{leftmargin=*, itemsep=2pt, topsep=3pt}
+\titlespacing*{\section}{0pt}{8pt}{4pt}
+\titlespacing*{\subsection}{0pt}{6pt}{3pt}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\pagestyle{plain}
+
+\title{\vspace{-2.0em}\textbf{SPR 4862 High-Level Implementation Outline}\\
+\large INDOT Solar Development Suitability Map}
+\author{Md Kamruzzaman Kamrul}
+\date{May 19, 2026}
+
+\begin{document}
+\maketitle
+\vspace{-1.2em}
+
+\section{Project Goal}
+
+The goal of this project is to develop a public-facing, interactive web map for
+INDOT solar development suitability. The map will use the provided GIS shapefiles
+for candidate sites, INDOT facilities, and right-of-way/interchange sites. The
+system will allow users to inspect site locations, view relevant suitability
+attributes, filter sites, and support future data updates through a repeatable
+processing pipeline.
+
+\section{Proposed Implementation Approach}
+
+\subsection{1. Data Preparation and Validation}
+\begin{itemize}
+  \item Inspect the provided shapefiles and document the available fields, record counts, coordinate systems, and geometry types.
+  \item Clean the spatial data before it is used in the web application.
+  \item Convert the GIS data into web-friendly formats such as GeoJSON and CSV.
+  \item Preserve original source fields while adding cleaned display fields for the public map.
+\end{itemize}
+
+\subsection{2. Data Processing Pipeline}
+\begin{itemize}
+  \item Build a repeatable Python-based pipeline to read, validate, clean, and export the site data.
+  \item Repair geometry issues where needed.
+  \item Derive usable latitude and longitude from the actual geometries.
+  \item Normalize fields so that values are displayed consistently across layers.
+\end{itemize}
+
+\subsection{3. Web Map Prototype}
+\begin{itemize}
+  \item Develop an initial interactive map using cleaned GeoJSON data.
+  \item Add separate layers for facility and ROW/interchange sites.
+  \item Add basic popups, legends, and site-type filters.
+  \item Use this prototype to confirm the data model and visual design before building a larger backend.
+\end{itemize}
+
+\subsection{4. Backend and Configuration}
+\begin{itemize}
+  \item After the cleaned data model is stable, add a backend API for site queries, details, statistics, and exports.
+  \item Use a configuration file to control display labels, visible fields, filters, and layer behavior.
+  \item Keep the system maintainable so future shapefile updates can be processed with minimal manual work.
+\end{itemize}
+
+\subsection{5. Final Application, Testing, and Documentation}
+\begin{itemize}
+  \item Integrate the frontend, backend, and cleaned data outputs.
+  \item Test map performance, browser behavior, filtering, popups, and data exports.
+  \item Prepare setup documentation, data-update instructions, and a final technical summary.
+\end{itemize}
+
+\section{Initial Assessment Completed}
+
+I completed an initial inspection of the local GIS files and generated a data
+inventory report. The initial assessment confirms that the main shapefiles are
+available and readable:
+
+\begin{itemize}
+  \item Candidate sites: 104 records.
+  \item Facility scored sites: 58 records.
+  \item ROW/interchange scored sites: 45 records.
+  \item All three datasets use the same projected coordinate system, EPSG:26916.
+  \item The data can be read successfully in Python using GeoPandas.
+\end{itemize}
+
+This means the project can move forward with a Python-based data pipeline and a
+web mapping workflow. The next immediate technical step is to create the cleaned
+export files that the first web map prototype will consume.
+
+\section{Current Problems I Am Working Through}
+
+During the initial assessment, I found several data issues that need to be handled
+before the map is built. I am currently working on solving these as part of the
+data-cleaning pipeline.
+
+\begin{itemize}
+  \item The latitude and longitude fields in the shapefiles are not usable because they are stored as zero values. I will derive real map coordinates from the geometry instead.
+  \item One candidate site appears in the all-candidate file but does not appear in the scored facility or ROW files. I am checking how to represent this site without losing it.
+  \item One geometry has a self-intersection issue. I will repair this during export so it does not cause problems in GeoJSON or PostGIS.
+  \item Some land-cover fields are stored as percentages in one file and fractions in the scored files. I will normalize these values for consistent display.
+  \item Some score fields appear to be layer-specific, meaning they should not be shown as equally applicable for every site type.
+  \item Some site labels and site-type values need cleanup for public display while preserving the original source data.
+\end{itemize}
+
+\section{Expected Near-Term Output}
+
+The next working output will be a cleaned dataset package containing:
+
+\begin{itemize}
+  \item Clean GeoJSON files for the first map prototype.
+  \item A CSV export for easier review.
+  \item A short validation report showing row counts, repaired geometries, missing score records, and normalized fields.
+  \item A simple interactive map prototype to verify that the cleaned data displays correctly.
+\end{itemize}
+
+\section{Requested Direction and Feedback}
+
+At this stage, I am working based on my current experience, available materials,
+and technical understanding of the GIS data and web-mapping workflow. I will share
+the working materials and updates momentarily as I continue to organize the project.
+If any part of the plan, data handling approach, or implementation direction should
+be changed, please let me know so I can address it early and adjust the work.
+
+If you have any specific directives for the map, interface, data fields, or expected
+workflow, I can try to incorporate those as well. I will also maintain the project
+through GitHub and update it from time to time as the implementation progresses.
+GitHub repository link: \url{https://github.com/kamrul28890/InDoT-map-project}.
+
+You also mentioned that Illinois had a similar interactive map, but the original
+public link does not appear to be available anymore. If there is any way to find,
+access, or recover that map or related screenshots/documentation, could you please
+look into it? Having access to the Illinois example would help significantly in
+understanding the expected requirements, interface behavior, and stakeholder-facing
+features for the INDOT version.
+
+\end{document}

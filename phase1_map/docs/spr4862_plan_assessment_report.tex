@@ -1,0 +1,362 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  urlcolor=blue!50!black
+}
+
+\setlist[itemize]{leftmargin=*, itemsep=2pt, topsep=4pt}
+\setlist[enumerate]{leftmargin=*, itemsep=2pt, topsep=4pt}
+\titleformat{\section}{\Large\bfseries}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.6em}{}
+\renewcommand{\arraystretch}{1.18}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\code}[1]{\nolinkurl{#1}}
+
+\title{\textbf{SPR 4862 Implementation Plan and Initial Data Assessment}\\
+\large INDOT Solar Development Suitability Map}
+\author{Md Kamruzzaman Kamrul}
+\date{May 18, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document consolidates the implementation plan for the INDOT Solar Development
+Suitability Map with the first technical assessment performed on the local shapefile
+deliverables. It records the intended system architecture, phased work plan, initial
+data inventory, what worked well, what did not work as expected, and the likely
+reasons behind the observed data issues. The purpose is to create a traceable baseline
+before moving into data cleaning, normalization, API development, and public map
+implementation.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Project Purpose}
+
+The project goal is to build a publicly accessible, interactive web-based map for
+potential solar development sites on INDOT-owned facilities and right-of-way parcels.
+The application should allow users to inspect candidate sites, compare suitability
+attributes, filter or search by relevant criteria, and export or review site data in
+a maintainable format.
+
+The immediate implementation goal is to turn the provided GIS shapefiles into a clean,
+web-ready data layer. Later implementation can then add an API, map interface,
+configuration system, deployment workflow, documentation, and handoff package.
+
+\section{Source Materials Reviewed}
+
+\begin{longtable}{L{0.32\textwidth} L{0.28\textwidth} L{0.32\textwidth}}
+\toprule
+\textbf{Source} & \textbf{Location} & \textbf{Use in Assessment} \\
+\midrule
+\endhead
+Implementation plan & \code{Implementation_Plan_SPR4862.md} & Baseline scope, phases, functional requirements, success criteria, and deliverables. \\
+Candidate site shapefile & \code{All_Candidate_Sites/All_Candidate_Sites_Final.shp} & Base candidate site inventory. \\
+Facility scored shapefile & \code{Facility_Scored/solar_potential_scored_indotfacility.shp} & Scored INDOT facility subset. \\
+ROW scored shapefile & \code{ROW_Scored/solar_potential_scored_interchange.shp} & Scored interchange/right-of-way subset. \\
+Data inventory report & \code{docs/data_inventory.md} & Generated field-level inventory from the local shapefiles. \\
+Reference report PDF & \code{R1.IDOT_dot_57410_DS1 (1).pdf} & Reference decision-support tool and suitability-scoring context. \\
+Conversation notes & \code{conversation_with_Dr.Chang.txt} & Project background and Illinois tool reference. \\
+\bottomrule
+\end{longtable}
+
+\section{Full Implementation Plan}
+
+\subsection{System Architecture}
+
+The planned system has five major layers:
+
+\begin{enumerate}
+  \item \textbf{Data processing pipeline}: read shapefiles, validate geometry, normalize fields, repair known issues, and export clean spatial data.
+  \item \textbf{Spatial data store}: start with file-based GeoJSON/CSV for the prototype; move to PostGIS for production querying if needed.
+  \item \textbf{Backend API}: provide endpoints for sites, site details, statistics, configuration, and export.
+  \item \textbf{Frontend map}: interactive Leaflet/React web application with layers, popups, filters, legends, and responsive behavior.
+  \item \textbf{Deployment and documentation}: Dockerized environment, repeatable build/deploy steps, user guide, admin guide, and technical report.
+\end{enumerate}
+
+\subsection{Phased Delivery Plan}
+
+\begin{longtable}{L{0.18\textwidth} L{0.28\textwidth} L{0.44\textwidth}}
+\toprule
+\textbf{Phase} & \textbf{Focus} & \textbf{Primary Outputs} \\
+\midrule
+\endhead
+1 & Foundation and data preparation & Repository structure, dependency file, shapefile inventory, schema report, data-quality findings. \\
+2 & Data cleaning and export & Valid geometry, derived latitude/longitude, normalized display fields, clean GeoJSON/CSV outputs. \\
+3 & Backend API & Site-list endpoint, site-detail endpoint, summary-statistics endpoint, filtering and export support. \\
+4 & Frontend map prototype & Interactive base map, facility and ROW layers, popups, filters, legend, responsive layout. \\
+5 & Integration and QA & End-to-end workflow tests, data validation checks, performance checks, browser review. \\
+6 & Deployment and documentation & Deployment configuration, public build, user/admin docs, final technical handoff. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Functional Requirements}
+
+\begin{itemize}
+  \item Parse and validate all three shapefile inputs.
+  \item Preserve raw source fields while adding cleaned public-facing fields.
+  \item Convert projected geometries from \code{EPSG:26916} to \code{EPSG:4326} for web mapping.
+  \item Display candidate sites on an interactive map.
+  \item Support layer toggling for facility and ROW/interchange sites.
+  \item Support filtering by site type, score fields, land area, district/layer, flood status, and related attributes.
+  \item Show site details in map popups or side panels.
+  \item Export filtered data as GeoJSON or CSV.
+  \item Provide documentation for setup, data updates, and maintenance.
+\end{itemize}
+
+\subsection{Non-Functional Requirements}
+
+\begin{itemize}
+  \item Keep the data processing reproducible from source shapefiles.
+  \item Keep the frontend responsive and usable on desktop and mobile screens.
+  \item Keep map rendering fast enough for the current 100-site scale, with room for larger future data.
+  \item Use a maintainable configuration approach so labels, filters, and display fields can change without deep code edits.
+  \item Make the deployment path simple enough for future handoff.
+\end{itemize}
+
+\subsection{Recommended Next Implementation Order}
+
+\begin{enumerate}
+  \item Data cleaning and normalized export.
+  \item Minimal static map prototype consuming the cleaned GeoJSON.
+  \item Backend API only after the cleaned data model is stable.
+  \item React/Leaflet interface with filters and popups.
+  \item Production packaging, testing, and documentation.
+\end{enumerate}
+
+\section{Initial Assessment Performed}
+
+\subsection{Environment Setup}
+
+The workspace already contained a Python virtual environment at \code{.venv}, but it
+did not contain GIS libraries. A minimal \code{requirements.txt} was added and installed
+successfully. The dependencies installed cleanly and allowed local reading of all
+three shapefiles using GeoPandas.
+
+\begin{longtable}{L{0.32\textwidth} L{0.58\textwidth}}
+\toprule
+\textbf{Item} & \textbf{Result} \\
+\midrule
+\endhead
+Python version & Python 3.10.11 \\
+GIS dependencies & GeoPandas, Pyogrio, Shapely, PyProj, Pandas \\
+Inventory script & \code{scripts/inspect_shapefiles.py} \\
+Generated inventory & \code{docs/data_inventory.md} \\
+\bottomrule
+\end{longtable}
+
+\subsection{Dataset Inventory}
+
+\begin{longtable}{L{0.27\textwidth} L{0.13\textwidth} L{0.20\textwidth} L{0.27\textwidth}}
+\toprule
+\textbf{Dataset} & \textbf{Records} & \textbf{CRS} & \textbf{Geometry Types} \\
+\midrule
+\endhead
+\code{All_Candidate_Sites_Final.shp} & 104 & \code{EPSG:26916} & Polygon, MultiPolygon \\
+\code{solar_potential_scored_indotfacility.shp} & 58 & \code{EPSG:26916} & Polygon, MultiPolygon \\
+\code{solar_potential_scored_interchange.shp} & 45 & \code{EPSG:26916} & Polygon, MultiPolygon \\
+\bottomrule
+\end{longtable}
+
+The scored facility and ROW files together contain 103 records. The all-candidate
+file contains 104 records. All files use the same projected coordinate system,
+which is suitable for GIS operations but must be transformed for browser mapping.
+
+\section{What Worked Well}
+
+\begin{longtable}{L{0.28\textwidth} L{0.60\textwidth}}
+\toprule
+\textbf{Area} & \textbf{Assessment} \\
+\midrule
+\endhead
+File availability & All three shapefiles named in the plan are present locally, including supporting \code{.dbf}, \code{.prj}, \code{.shx}, and metadata files. \\
+Coordinate reference system & All datasets consistently use \code{EPSG:26916}, so conversion to web coordinates can be handled consistently. \\
+Primary identifiers & \code{SPR_ID} is present in all three datasets and is unique within each dataset. This gives us a usable join/reference key. \\
+Geometry coverage & The source geometries are polygonal, which is appropriate for parcel/site display and area-based map interaction. \\
+Score fields & The scored facility and ROW files include suitability component fields such as \code{sol_s}, \code{slp_s}, \code{trn_s}, \code{evp_s}, \code{dem_s}, \code{fld_s}, and \code{lc_s}. \\
+Metadata lineage & The ArcGIS metadata includes processing history, export dates, source feature-class names, and field-mapping information. This helped explain several unexpected data behaviors. \\
+Reference context & The Illinois decision-support report explains the intended style of tool and why different property types may use different suitability logic. \\
+\bottomrule
+\end{longtable}
+
+\section{What Did Not Work or Was Unexpected}
+
+\subsection{Latitude and Longitude Fields Are Not Usable}
+
+The \code{Lat} and \code{Long} fields are present in every dataset, but all checked
+values are \code{0.0}. This means they cannot be used for map placement, popups, or
+exports.
+
+\textbf{Likely reason:} The metadata shows these fields were carried through as
+ordinary attribute fields during ArcGIS export. They appear to have been placeholders
+or stale fields that were not recalculated after the final geometry processing.
+
+\textbf{Implementation response:} Ignore the raw \code{Lat} and \code{Long} fields for
+location. Derive centroid longitude/latitude from geometry after transforming to
+\code{EPSG:4326}. Preserve the raw fields only for traceability if needed.
+
+\subsection{One Candidate Site Has No Scored Counterpart}
+
+The all-candidate dataset contains 104 records, while the two scored layers contain
+103 total records. The missing scored record is:
+
+\begin{center}
+\begin{tabular}{L{0.16\textwidth} L{0.18\textwidth} L{0.36\textwidth} L{0.12\textwidth}}
+\toprule
+\textbf{SPR\_ID} & \textbf{Site Type} & \textbf{Name} & \textbf{Land Area} \\
+\midrule
+416 & Complex & IndotFac - Columbus Lab & 1800 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Likely reason:} The all-candidate file and scored files come from different
+ArcGIS exports. The final candidate layer was exported later from
+\code{Cleaned_Solar_Potental_CZ_remove(exclusion)}, while the scored files were exported
+from \code{solar_potential_scored_indotfacility} and
+\code{solar_potential_scored_interchage}. The Columbus Lab site is very small and may
+have been excluded from or never included in the scored subsets.
+
+\textbf{Implementation response:} Include the site in the candidate layer but mark
+score fields as missing or \code{not_scored}. Do not silently drop it unless the project
+owner confirms that unscored sites should be excluded.
+
+\subsection{Land-Cover Fields Use Different Units}
+
+Fields such as \code{DevOpe_21}, \code{DevLowI_22}, \code{DDevMed_23}, and
+\code{CultCr_82} sum to approximately \code{100} in the all-candidate file, but to
+approximately \code{1} in the scored files.
+
+\textbf{Likely reason:} The all-candidate workflow calculated land-cover values as
+percentages. The scored files appear to use normalized fractions for suitability
+scoring. The ArcGIS lineage includes percentage calculations such as
+\code{Fld_Perc = (Fld_Area / Shape_Area) * 100}.
+
+\textbf{Implementation response:} Create cleaned fields with explicit unit names,
+for example \code{landcover_developed_open_pct}. Convert fractions to percentages
+for display and keep raw source fields separately.
+
+\subsection{One Invalid Geometry}
+
+One geometry is invalid in both the all-candidate and ROW scored datasets:
+
+\begin{center}
+\begin{tabular}{L{0.18\textwidth} L{0.24\textwidth} L{0.42\textwidth}}
+\toprule
+\textbf{SPR\_ID} & \textbf{Site Type} & \textbf{Issue} \\
+\midrule
+371 & Interchange & Ring self-intersection \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Likely reason:} The invalid polygon was probably inherited from the source
+GIS layer or introduced by geoprocessing, especially the erase operation used in
+the final candidate workflow.
+
+\textbf{Implementation response:} Repair geometries during the cleaning step using
+Shapely's geometry validation tools before writing GeoJSON or loading into PostGIS.
+Log any repaired records.
+
+\subsection{Layer Naming and Site Labels Are Confusing}
+
+Several ROW/interchange records have display names starting with \code{IndotFac -}.
+The \code{Site_typ} field also mixes casing and labels such as \code{Interchange},
+\code{unit}, and \code{Complex}.
+
+\textbf{Likely reason:} The ArcGIS metadata shows broad field calculations such as
+adding \code{IndotFac -} to site-name fields. This was applied to the prepared GIS
+data rather than tailored to final public-facing labels.
+
+\textbf{Implementation response:} Preserve the raw fields but add cleaned display
+fields such as \code{site_type_display}, \code{site_name_display}, and
+\code{source_layer}. Normalize labels for the UI.
+
+\subsection{Some Suitability Fields Are Layer-Specific}
+
+Facility \code{evp_s} is always \code{0.0}; ROW \code{dem_s} is always \code{0.0}; and
+facility \code{dem_s} is limited to a narrow range.
+
+\textbf{Likely reason:} The reference decision-support report explains that different
+property types are evaluated using different suitability logic. Some criteria are
+not meaningful for every site type.
+
+\textbf{Implementation response:} Do not present every score field as equally
+applicable to every layer. The frontend should hide, disable, or explain
+non-applicable criteria per layer.
+
+\section{Probable Data Lineage}
+
+The metadata indicates this rough lineage:
+
+\begin{enumerate}
+  \item Source GIS data was prepared in ArcGIS Pro from INDOT facilities, rest/welcome areas, interchanges, open land, environmental layers, transmission line proximity, floodplain data, land-cover data, and related suitability factors.
+  \item Intermediate candidate sites were cleaned and enriched with derived fields such as land area, flood percentage, forest percentage, transmission distance, and solar mean.
+  \item \code{SPR_ID} was calculated from feature IDs during preparation.
+  \item Some text labels were modified with prefixes such as \code{IndotFac -}.
+  \item Final candidate sites were processed through an erase operation against a road/clear-zone buffer.
+  \item The all-candidate shapefile was exported from the later candidate layer.
+  \item The scored facility and ROW shapefiles were exported separately from scored subset feature classes.
+\end{enumerate}
+
+This explains why the files align closely but are not identical: they are related
+exports from the same project, but not a single perfectly synchronized output.
+
+\section{Risks and Mitigations}
+
+\begin{longtable}{L{0.30\textwidth} L{0.30\textwidth} L{0.30\textwidth}}
+\toprule
+\textbf{Risk} & \textbf{Impact} & \textbf{Mitigation} \\
+\midrule
+\endhead
+Using stale \code{Lat}/\code{Long} fields & Sites would render at the wrong location or fail map display. & Derive coordinates from geometry only. \\
+Mixing percentage and fraction units & Misleading land-cover values and filters. & Normalize to explicit cleaned percent fields. \\
+Dropping unscored sites silently & Candidate inventory would not match source inventory. & Include unscored status and document missing score fields. \\
+Invalid geometry during export & GeoJSON/PostGIS errors or broken map rendering. & Repair and log geometry fixes. \\
+Confusing labels in public map & Users may misunderstand facility vs ROW layers. & Add cleaned display labels and preserve raw source values. \\
+Layer-specific scores shown globally & Users may compare non-applicable criteria. & Configure score display by site type/layer. \\
+\bottomrule
+\end{longtable}
+
+\section{Immediate Next Work}
+
+The next implementation step should be a deterministic data-cleaning pipeline that:
+
+\begin{enumerate}
+  \item Reads the three shapefiles.
+  \item Repairs invalid geometries and logs repaired records.
+  \item Converts all geometries to \code{EPSG:4326}.
+  \item Calculates centroid latitude and longitude from geometry.
+  \item Normalizes land-cover fields to display percentages.
+  \item Adds cleaned fields for site type, source layer, site name, score availability, and score applicability.
+  \item Exports clean GeoJSON and CSV files for frontend prototyping.
+  \item Writes a validation report summarizing row counts, missing scored sites, geometry repairs, and field normalization.
+\end{enumerate}
+
+\section{Conclusion}
+
+The initial assessment confirms that the provided GIS data is usable for a web-based
+solar suitability map, but it should not be consumed directly by the frontend. The
+data is the product of several ArcGIS exports and includes stale coordinate fields,
+one missing scored candidate, one invalid geometry, mixed unit conventions, and
+labels that need public-facing cleanup. These are manageable issues if the project
+starts with a clear cleaning and validation pipeline before API and frontend work.
+
+\end{document}

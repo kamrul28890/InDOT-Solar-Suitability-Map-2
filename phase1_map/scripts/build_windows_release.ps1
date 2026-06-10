@@ -8,6 +8,14 @@ $zipPath = Join-Path $releaseDir "$packageName.zip"
 $pyInstallerDist = Join-Path $root "build\pyinstaller_dist"
 $pyInstallerWork = Join-Path $root "build\pyinstaller_work"
 $pyInstallerSpec = Join-Path $root "build\pyinstaller_spec"
+$pythonCandidates = @(
+  (Join-Path $root ".venv\Scripts\python.exe"),
+  (Join-Path $root "..\.venv\Scripts\python.exe")
+)
+$python = $pythonCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+if (-not $python) {
+  throw "Could not find project Python. Expected .venv under phase1_map or the repository root."
+}
 
 Set-Location $root
 
@@ -29,10 +37,10 @@ Write-Host "Running full project checks..."
 & "$root\scripts\check_project.ps1"
 
 Write-Host "Checking PyInstaller..."
-& "$root\.venv\Scripts\python.exe" -m PyInstaller --version | Out-Null
+& $python -m PyInstaller --version | Out-Null
 if ($LASTEXITCODE -ne 0) {
   Write-Host "Installing PyInstaller into the project virtual environment..."
-  Invoke-Checked { & "$root\.venv\Scripts\python.exe" -m pip install pyinstaller==6.11.1 } "PyInstaller install"
+  Invoke-Checked { & $python -m pip install pyinstaller==6.11.1 } "PyInstaller install"
 }
 
 Write-Host "Cleaning prior release artifacts..."
@@ -43,7 +51,7 @@ if (Test-Path $pyInstallerWork) { Remove-Item -LiteralPath $pyInstallerWork -Rec
 if (Test-Path $pyInstallerSpec) { Remove-Item -LiteralPath $pyInstallerSpec -Recurse -Force }
 
 Write-Host "Building server executable..."
-Invoke-Checked { & "$root\.venv\Scripts\python.exe" -m PyInstaller `
+Invoke-Checked { & $python -m PyInstaller `
   --noconfirm `
   --clean `
   --onedir `
