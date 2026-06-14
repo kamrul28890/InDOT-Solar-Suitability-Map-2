@@ -1,9 +1,11 @@
 # Editor Backend
 
-FastAPI backend for the local Phase 2 editor application.
+Earlier modular FastAPI backend scaffold for the local Phase 2 editor application.
 
-Current checkpoint:
+The active imported backend now lives at:
 
-- `editor_api.main:app` exposes `/health`.
-- `POST /api/import/inspect` reads the real INDOT shapefile folders and returns import summaries.
-- Selecting `All_Candidate_Sites`, `Facility_Scored`, or `ROW_Scored` resolves back to the parent project folder when all sibling layers are present.
+```text
+phase2_editor/editor_backend/
+```
+
+The imported backend is currently used by `npm run api`, the tests, and Windows packaging. This older `backend/editor_api` scaffold is retained temporarily for reference while the mature implementation is integrated and stabilized.

@@ -98,22 +98,20 @@ export function App() {
     <main className="app-shell" data-theme={theme}>
       <Sidebar
         basemapId={basemapId}
-        directoryLayers={directoryLayers}
-        enabled={enabled}
         error={error}
         onBasemapChange={setBasemapId}
-        onLayerToggle={handleLayerToggle}
         onQueryChange={setQuery}
-        onSiteSelect={selectSite}
         onThemeToggle={() => setTheme((current) => (current === 'light' ? 'dark' : 'light'))}
         query={query}
-        selectedSite={selectedSite}
         stats={stats}
         theme={theme}
         visibleCount={visibleCount}
       />
       <MapView
         activeBasemap={activeBasemap}
+        enabled={enabled}
+        layerControls={directoryLayers}
+        onLayerToggle={handleLayerToggle}
         onSelectSite={selectSite}
         onZoomChange={setZoom}
         query={query}

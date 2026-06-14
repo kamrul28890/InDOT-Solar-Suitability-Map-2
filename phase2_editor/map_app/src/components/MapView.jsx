@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 
 import { DETAIL_ZOOM, INITIAL_CENTER, INITIAL_ZOOM, MIN_ZOOM } from '../config/mapConfig';
+import { layerColors } from '../config/mapConfig';
 import { featureCenter, featureKey, siteLabel } from '../utils/features';
 import { formatNumber } from '../utils/format';
 import { bindPopup, markerStyle, styleFeature } from '../map/mapStyles';
@@ -67,9 +68,41 @@ function FeatureDots({ layers, selectedSite, onSelectSite }) {
   );
 }
 
-export function MapView({ activeBasemap, selectedSite, showDetailShapes, visibleLayers, onSelectSite, onZoomChange, query }) {
+function MapLayerControl({ enabled, layers, onLayerToggle }) {
+  return (
+    <div className="map-layer-control" aria-label="Map layer controls">
+      <strong>Layers</strong>
+      {layers.map((layer) => (
+        <label className="map-layer-toggle" key={layer.name}>
+          <input
+            type="checkbox"
+            checked={enabled[layer.name] ?? false}
+            onChange={(event) => onLayerToggle(layer.name, event.target.checked)}
+          />
+          <span className="swatch" style={{ backgroundColor: layerColors[layer.name] }} />
+          <span>{layer.title}</span>
+          <small>{layer.count}</small>
+        </label>
+      ))}
+    </div>
+  );
+}
+
+export function MapView({
+  activeBasemap,
+  enabled,
+  layerControls,
+  selectedSite,
+  showDetailShapes,
+  visibleLayers,
+  onLayerToggle,
+  onSelectSite,
+  onZoomChange,
+  query,
+}) {
   return (
     <section className="map-stage" aria-label="Interactive Indiana solar suitability map">
+      <MapLayerControl enabled={enabled} layers={layerControls} onLayerToggle={onLayerToggle} />
       <MapContainer center={INITIAL_CENTER} zoom={INITIAL_ZOOM} minZoom={MIN_ZOOM} className="map">
         <MapFocus selectedSite={selectedSite} />
         <ZoomState onZoomChange={onZoomChange} />

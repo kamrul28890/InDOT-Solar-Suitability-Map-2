@@ -1,32 +1,70 @@
 # INDOT Phase 2 Editor
 
-This folder contains the editor-mode application work.
+This folder contains the integrated editor-mode application for the INDOT solar suitability map. The mature standalone editor implementation from `D:\My Projects\InDOT-Shapefile-Editor` has been imported here and adapted to the organized Phase 2 workspace.
 
 Current contents:
 
 - `docs/indot_editor_implementation_plan.md` - architecture and implementation plan for the five-stage editor workflow.
-- `backend/` - FastAPI editor backend.
-- `frontend/` - React wizard frontend placeholder.
-- `map_app/` - future static map app for preview/export.
-- `packaging/` - future Windows packaging assets.
+- `editor_backend/` - active FastAPI editor backend with import, delta edits, autosave, validation, preview, and export.
+- `backend/` - earlier modular scaffold retained for reference while the imported backend is active.
+- `frontend/` - React five-stage editor interface.
+- `map_app/` - Phase 1-derived static map app build retained for preview/export parity work.
+- `packaging/` - Windows launcher assets.
 - `scripts/check_editor.ps1` - editor validation command.
+- `scripts/build_windows_release.ps1` - PyInstaller Windows release builder.
 
-The implementation will be built phase by phase, with validation after each phase before moving to the next.
+## Run During Development
 
-Current validation:
+Start the API:
+
+```powershell
+npm run api
+```
+
+Start the browser UI in a second PowerShell window:
+
+```powershell
+npm run dev
+```
+
+Open:
+
+```text
+http://127.0.0.1:5174
+```
+
+The production backend also serves the built editor at:
+
+```text
+http://127.0.0.1:8010
+```
+
+## Validation
 
 ```powershell
 .\scripts\check_editor.ps1
 ```
 
-Package assembly:
+This runs backend tests against the real `phase1_map` shapefiles and builds both the editor frontend and retained static map app.
+
+## Windows Release
 
 ```powershell
-.\scripts\build_editor_package.ps1
+npm run release:windows
 ```
 
-Current backend routes:
+This creates:
 
-- `GET /health` - confirms the editor backend is running.
-- `POST /api/browse-folder` - opens the native Windows folder picker.
-- `POST /api/import/inspect` - accepts a folder path, resolves the INDOT project folder, reads the three shapefile layers, repairs geometries for inspection, and returns layer summaries.
+```text
+release/INDOT_Solar_Editor_Windows.zip
+```
+
+## Active Workflow
+
+The editor now supports the full five-stage workflow:
+
+1. Import project folder with a native Browse button or typed path.
+2. Configure visible fields, labels, and field order.
+3. Edit feature attributes in a table with search, filters, undo, and revert actions.
+4. Validate blocking errors and warnings.
+5. Generate preview and export a static deployment ZIP.

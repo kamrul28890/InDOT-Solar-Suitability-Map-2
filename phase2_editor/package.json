@@ -4,9 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "api": "..\\.venv\\Scripts\\python.exe -m uvicorn editor_backend.main:app --host 127.0.0.1 --port 8010 --reload",
+    "dev": "vite --config frontend/vite.config.js --host 127.0.0.1 --port 5174",
+    "test:api": "..\\.venv\\Scripts\\python.exe -m pytest -q tests",
+    "build": "vite build --config frontend/vite.config.js",
     "build:frontend": "vite build --config frontend/vite.config.js",
     "build:map": "vite build --config map_app/vite.config.js",
-    "check": "npm run build:frontend && npm run build:map"
+    "check": "npm run build:frontend && npm run build:map && npm run test:api",
+    "release:windows": "powershell -ExecutionPolicy Bypass -File scripts/build_windows_release.ps1"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
@@ -19,4 +24,3 @@
     "lucide-react": "latest"
   }
 }
-

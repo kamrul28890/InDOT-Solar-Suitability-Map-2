@@ -1,31 +1,25 @@
 @echo off
 setlocal
+cd /d "%~dp0"
 
-set "PORT=8010"
-set "ROOT=%~dp0"
-set "SERVER_EXE=%ROOT%server\editor_server.exe"
-set "PYTHON=%ROOT%server\.venv\Scripts\python.exe"
-set "RUNNER=%ROOT%server\run_editor.py"
+set PORT=8010
+echo Starting INDOT Solar Editor on http://127.0.0.1:%PORT% ...
 
-echo Starting INDOT Solar Editor...
+start "INDOT Solar Editor Server" /min "%~dp0server\editor_server.exe" --host 127.0.0.1 --port %PORT%
 
-if exist "%SERVER_EXE%" (
-  start "INDOT Solar Editor Server" /min "%SERVER_EXE%" --host 127.0.0.1 --port %PORT%
-) else if exist "%PYTHON%" (
-  start "INDOT Solar Editor Server" /min "%PYTHON%" "%RUNNER%" --host 127.0.0.1 --port %PORT%
-) else (
-  echo Missing server executable.
-  pause
-  exit /b 1
+echo Waiting for server...
+for /l %%i in (1,1,40) do (
+  powershell -NoProfile -Command "try { $r = Invoke-WebRequest 'http://127.0.0.1:%PORT%/health' -UseBasicParsing -TimeoutSec 2; if ($r.StatusCode -eq 200) { exit 0 } } catch { exit 1 }"
+  if not errorlevel 1 goto ready
+  timeout /t 1 /nobreak >nul
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$url='http://127.0.0.1:%PORT%/health'; for($i=0; $i -lt 45; $i++){ try { Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 2 | Out-Null; exit 0 } catch { Start-Sleep -Seconds 1 } }; exit 1"
-if errorlevel 1 (
-  echo The editor server did not start in time.
-  pause
-  exit /b 1
-)
+echo Server did not become ready. Leave this window open and check the server console.
+pause
+exit /b 1
 
-start "" "http://127.0.0.1:%PORT%"
-echo The editor is running at http://127.0.0.1:%PORT%
-endlocal
+:ready
+start "" "http://127.0.0.1:%PORT%/"
+echo Editor is running at http://127.0.0.1:%PORT%/
+echo Close the server window to stop the editor.
+pause

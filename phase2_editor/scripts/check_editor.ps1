@@ -13,16 +13,10 @@ if (-not $python) {
 
 Set-Location $editorRoot
 
-Write-Host "Running editor backend smoke tests..."
-& $python -m pytest -q tests
-if ($LASTEXITCODE -ne 0) {
-  throw "Editor tests failed with exit code $LASTEXITCODE"
-}
-
-Write-Host "Building editor frontend and static map app..."
+Write-Host "Building editor frontend, static map app, and running backend tests..."
 npm run check
 if ($LASTEXITCODE -ne 0) {
-  throw "Editor frontend/map build failed with exit code $LASTEXITCODE"
+  throw "Editor checks failed with exit code $LASTEXITCODE"
 }
 
 Write-Host "Editor checks completed."
