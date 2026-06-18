@@ -5,21 +5,17 @@ import { SearchBox } from './SearchBox';
 import { StatsGrid } from './StatsGrid';
 
 export function Sidebar({
-  basemapId,
   error,
   query,
   stats,
   theme,
   visibleCount,
-  onBasemapChange,
   onQueryChange,
   onThemeToggle,
 }) {
   return (
     <aside className="sidebar">
       <AppHeader
-        basemapId={basemapId}
-        onBasemapChange={onBasemapChange}
         onThemeToggle={onThemeToggle}
         theme={theme}
       />

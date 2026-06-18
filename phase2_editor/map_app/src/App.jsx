@@ -4,7 +4,7 @@ import { MapView } from './components/MapView';
 import { Sidebar } from './components/Sidebar';
 import { BASEMAP_STORAGE_KEY, DETAIL_ZOOM, basemapLayers } from './config/mapConfig';
 import { loadAppData } from './services/api';
-import { featureCenter, siteLabel } from './utils/features';
+import { featureBounds, featureCenter, siteLabel } from './utils/features';
 import { featureMatches, groupFeaturesByLayer } from './utils/search';
 
 const initialEnabledLayers = {
@@ -87,6 +87,7 @@ export function App() {
     setEnabled((current) => ({ ...current, [feature.properties.dataset]: true }));
     setSelectedSite({
       key,
+      bounds: featureBounds(feature),
       latitude: center.latitude,
       longitude: center.longitude,
       label: siteLabel(feature),
@@ -97,9 +98,7 @@ export function App() {
   return (
     <main className="app-shell" data-theme={theme}>
       <Sidebar
-        basemapId={basemapId}
         error={error}
-        onBasemapChange={setBasemapId}
         onQueryChange={setQuery}
         onThemeToggle={() => setTheme((current) => (current === 'light' ? 'dark' : 'light'))}
         query={query}
@@ -109,8 +108,10 @@ export function App() {
       />
       <MapView
         activeBasemap={activeBasemap}
+        basemapId={basemapId}
         enabled={enabled}
         layerControls={directoryLayers}
+        onBasemapChange={setBasemapId}
         onLayerToggle={handleLayerToggle}
         onSelectSite={selectSite}
         onZoomChange={setZoom}

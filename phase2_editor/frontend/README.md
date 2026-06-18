@@ -14,3 +14,5 @@ This is the active imported editor interface. It includes:
 - Undo, field revert, and row revert actions.
 - Validation issue review.
 - Preview and export controls.
+
+For the detailed meaning of the Fields screen columns and the Review/Edit parameters such as `feature_id`, `SPR_ID`, `Site_typ`, `Volt_Class`, flood fields, land-cover fields, and score fields, see `../docs/shapefile_inputs_and_fields.md`.

@@ -38,6 +38,7 @@ EXPORTS_DIR = OUTPUTS_DIR / "exports"
 MAP_APP_DIST = ROOT / "map_app" / "dist"
 AUTOSAVE_PATH = Path(gettempdir()) / "indot_editor_autosave.json"
 FORMAT_VERSION = "1.0"
+EXPORTED_MAP_PORT = 8125
 
 LABELS = {
     "SPR_ID": "SPR ID",
@@ -690,10 +691,16 @@ def write_static_map(output_dir: Path, data_base: str = "./data") -> None:
         index_path.write_text(index_html, encoding="utf-8")
     else:
         (output_dir / "index.html").write_text(VIEWER_HTML.replace("__DATA_BASE__", data_base), encoding="utf-8")
-    (output_dir / "README.txt").write_text(
-        "INDOT Solar Suitability Map\n\nUnzip this package and upload all files to your public web server folder. Open index.html or the deployed URL to verify the map.\n",
-        encoding="utf-8",
-    )
+    write_exported_map_launchers(output_dir)
+
+
+def write_exported_map_launchers(output_dir: Path) -> None:
+    server_dir = output_dir / "server"
+    server_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "Run_Exported_Map.bat").write_text(RUN_EXPORTED_MAP_BAT, encoding="utf-8")
+    (output_dir / "Stop_Exported_Map.bat").write_text(STOP_EXPORTED_MAP_BAT, encoding="utf-8")
+    (server_dir / "serve_exported_map.ps1").write_text(SERVE_EXPORTED_MAP_PS1, encoding="utf-8")
+    (output_dir / "README.txt").write_text(EXPORTED_MAP_README, encoding="utf-8")
 
 
 def generate_processed_output(session_id: str, output_dir: Path, popup_labels: bool = False) -> dict[str, Any]:
@@ -781,6 +788,219 @@ def browse_folder() -> dict[str, str]:
     folder = filedialog.askdirectory(title="Select the INDOT shapefile parent folder")
     root.destroy()
     return {"folder_path": folder}
+
+
+RUN_EXPORTED_MAP_BAT = f"""@echo off
+setlocal
+cd /d "%~dp0"
+
+set PORT={EXPORTED_MAP_PORT}
+set ROOT_DIR=%CD%
+set PID_FILE=%ROOT_DIR%\\.indot_exported_map.pid
+
+echo Starting INDOT exported map on http://127.0.0.1:%PORT% ...
+start "INDOT Exported Map Server" /min powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT_DIR%\\server\\serve_exported_map.ps1" -Root "%ROOT_DIR%" -Port %PORT% -PidFile "%PID_FILE%"
+
+echo Waiting for map server...
+for /l %%i in (1,1,30) do (
+  powershell -NoProfile -Command "try {{ $r = Invoke-WebRequest 'http://127.0.0.1:%PORT%/' -UseBasicParsing -TimeoutSec 2; if ($r.StatusCode -eq 200) {{ exit 0 }} }} catch {{ exit 1 }}"
+  if not errorlevel 1 goto ready
+  timeout /t 1 /nobreak >nul
+)
+
+echo The exported map server did not become ready.
+echo If another exported map is already running, use Stop_Exported_Map.bat and try again.
+pause
+exit /b 1
+
+:ready
+start "" "http://127.0.0.1:%PORT%/"
+echo Exported map is running at http://127.0.0.1:%PORT%/
+echo Use Stop_Exported_Map.bat when finished.
+pause
+"""
+
+
+STOP_EXPORTED_MAP_BAT = """@echo off
+setlocal
+cd /d "%~dp0"
+
+set ROOT_DIR=%CD%
+set PID_FILE=%ROOT_DIR%\\.indot_exported_map.pid
+
+if exist "%PID_FILE%" (
+  for /f %%p in ('type "%PID_FILE%"') do (
+    powershell -NoProfile -Command "Stop-Process -Id %%p -Force -ErrorAction SilentlyContinue"
+  )
+  del "%PID_FILE%" >nul 2>&1
+)
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$root=(Resolve-Path '.').Path; Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -notlike '* -Command *' -and $_.CommandLine -like '*-File *serve_exported_map.ps1*' -and $_.CommandLine -like ('*' + $root + '*') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+
+echo INDOT exported map server stopped if it was running.
+pause
+"""
+
+
+SERVE_EXPORTED_MAP_PS1 = """param(
+  [string]$Root = (Split-Path -Parent $PSScriptRoot),
+  [int]$Port = 8125,
+  [string]$PidFile = ""
+)
+
+$ErrorActionPreference = "Stop"
+$rootPath = (Resolve-Path -LiteralPath $Root).Path
+
+if ($PidFile) {
+  Set-Content -LiteralPath $PidFile -Value $PID -Encoding ASCII
+}
+
+$mimeTypes = @{
+  ".html" = "text/html; charset=utf-8"
+  ".js" = "text/javascript; charset=utf-8"
+  ".css" = "text/css; charset=utf-8"
+  ".json" = "application/json; charset=utf-8"
+  ".geojson" = "application/geo+json; charset=utf-8"
+  ".png" = "image/png"
+  ".jpg" = "image/jpeg"
+  ".jpeg" = "image/jpeg"
+  ".svg" = "image/svg+xml"
+  ".ico" = "image/x-icon"
+  ".txt" = "text/plain; charset=utf-8"
+}
+
+function Write-HttpResponse {
+  param(
+    [System.IO.Stream]$Stream,
+    [int]$Status,
+    [string]$ContentType,
+    [byte[]]$Body,
+    [bool]$HeadOnly = $false
+  )
+
+  $reason = @{
+    200 = "OK"
+    403 = "Forbidden"
+    404 = "Not Found"
+    405 = "Method Not Allowed"
+    500 = "Internal Server Error"
+  }[$Status]
+  if (-not $reason) { $reason = "OK" }
+
+  $headers = "HTTP/1.1 $Status $reason`r`nContent-Type: $ContentType`r`nContent-Length: $($Body.Length)`r`nConnection: close`r`nCache-Control: no-cache`r`n`r`n"
+  $headerBytes = [System.Text.Encoding]::ASCII.GetBytes($headers)
+  $Stream.Write($headerBytes, 0, $headerBytes.Length)
+  if (-not $HeadOnly -and $Body.Length -gt 0) {
+    $Stream.Write($Body, 0, $Body.Length)
+  }
+}
+
+function Write-TextResponse {
+  param(
+    [System.IO.Stream]$Stream,
+    [int]$Status,
+    [string]$Message,
+    [bool]$HeadOnly = $false
+  )
+  $body = [System.Text.Encoding]::UTF8.GetBytes($Message)
+  Write-HttpResponse -Stream $Stream -Status $Status -ContentType "text/plain; charset=utf-8" -Body $body -HeadOnly $HeadOnly
+}
+
+$listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Parse("127.0.0.1"), $Port)
+$listener.Start()
+
+try {
+  while ($true) {
+    $client = $listener.AcceptTcpClient()
+    try {
+      $stream = $client.GetStream()
+      $reader = [System.IO.StreamReader]::new($stream, [System.Text.Encoding]::ASCII, $false, 4096, $true)
+      $requestLine = $reader.ReadLine()
+      while ($true) {
+        $header = $reader.ReadLine()
+        if ($null -eq $header -or $header -eq "") { break }
+      }
+
+      if (-not $requestLine) {
+        continue
+      }
+
+      $parts = $requestLine.Split(" ")
+      if ($parts.Length -lt 2) {
+        Write-TextResponse -Stream $stream -Status 500 -Message "Bad request"
+        continue
+      }
+
+      $method = $parts[0].ToUpperInvariant()
+      $urlPath = ($parts[1] -split "\\?")[0]
+      $headOnly = $method -eq "HEAD"
+      if ($method -ne "GET" -and -not $headOnly) {
+        Write-TextResponse -Stream $stream -Status 405 -Message "Method not allowed"
+        continue
+      }
+
+      $path = [System.Uri]::UnescapeDataString($urlPath)
+      if ($path -eq "/" -or $path -eq "") {
+        $path = "/index.html"
+      }
+
+      $relative = $path.TrimStart("/") -replace "/", [System.IO.Path]::DirectorySeparatorChar
+      $filePath = [System.IO.Path]::GetFullPath((Join-Path $rootPath $relative))
+      if (-not $filePath.StartsWith($rootPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+        Write-TextResponse -Stream $stream -Status 403 -Message "Forbidden" -HeadOnly $headOnly
+        continue
+      }
+
+      if (-not (Test-Path -LiteralPath $filePath -PathType Leaf)) {
+        Write-TextResponse -Stream $stream -Status 404 -Message "Not found" -HeadOnly $headOnly
+        continue
+      }
+
+      $extension = [System.IO.Path]::GetExtension($filePath).ToLowerInvariant()
+      $contentType = $mimeTypes[$extension]
+      if (-not $contentType) {
+        $contentType = "application/octet-stream"
+      }
+
+      $body = [System.IO.File]::ReadAllBytes($filePath)
+      Write-HttpResponse -Stream $stream -Status 200 -ContentType $contentType -Body $body -HeadOnly $headOnly
+    } catch {
+      try {
+        $message = [System.Text.Encoding]::UTF8.GetBytes("Server error")
+        Write-HttpResponse -Stream $stream -Status 500 -ContentType "text/plain; charset=utf-8" -Body $message
+      } catch {
+      }
+    } finally {
+      $client.Close()
+    }
+  }
+} finally {
+  $listener.Stop()
+  if ($PidFile -and (Test-Path -LiteralPath $PidFile)) {
+    Remove-Item -LiteralPath $PidFile -Force -ErrorAction SilentlyContinue
+  }
+}
+"""
+
+
+EXPORTED_MAP_README = """INDOT Solar Suitability Map
+
+This folder contains an exported static map package.
+
+To run it on Windows:
+
+1. Extract the ZIP package first.
+2. Open the extracted folder.
+3. Double-click Run_Exported_Map.bat.
+4. The map should open automatically in your browser.
+5. When finished, double-click Stop_Exported_Map.bat.
+
+Do not open index.html directly from the file system. Browser security rules can block the map data files when opened with file://. The Run_Exported_Map.bat launcher starts a small local Windows server so the map behaves like the Phase 1 standalone package.
+
+For web deployment:
+
+Upload all files in this folder to the target public web server folder, then open the deployed URL.
+"""
 
 
 VIEWER_HTML = """<!doctype html>

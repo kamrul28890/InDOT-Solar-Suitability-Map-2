@@ -99,6 +99,10 @@ def test_preview_and_export_zip(tmp_path, monkeypatch):
     with zipfile.ZipFile(zip_path) as archive:
         names = set(archive.namelist())
         assert "index.html" in names
+        assert "Run_Exported_Map.bat" in names
+        assert "Stop_Exported_Map.bat" in names
+        assert "server/serve_exported_map.ps1" in names
+        assert "README.txt" in names
         assert "data/manifest.json" in names
         assert "data/facility_scored.geojson" in names
         facility = json.loads(archive.read("data/facility_scored.geojson").decode("utf-8"))
@@ -106,3 +110,10 @@ def test_preview_and_export_zip(tmp_path, monkeypatch):
         index_html = archive.read("index.html").decode("utf-8")
         assert 'window.INDOT_DATA_BASE = "./data"' in index_html
         assert 'src="./assets/' in index_html
+        run_bat = archive.read("Run_Exported_Map.bat").decode("utf-8")
+        assert "set ROOT_DIR=%CD%" in run_bat
+        assert '-Root "%ROOT_DIR%"' in run_bat
+        assert '-Root "%~dp0"' not in run_bat
+        readme = archive.read("README.txt").decode("utf-8")
+        assert "Run_Exported_Map.bat" in readme
+        assert "Do not open index.html directly" in readme

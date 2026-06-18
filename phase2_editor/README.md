@@ -5,6 +5,7 @@ This folder contains the integrated editor-mode application for the INDOT solar 
 Current contents:
 
 - `docs/indot_editor_implementation_plan.md` - architecture and implementation plan for the five-stage editor workflow.
+- `docs/shapefile_inputs_and_fields.md` - shapefile sidecar roles, imported field counts, raw DBF attributes, editor-derived fields, exported GeoJSON properties, Fields screen columns, and Review/Edit parameter meanings.
 - `editor_backend/` - active FastAPI editor backend with import, delta edits, autosave, validation, preview, and export.
 - `backend/` - earlier modular scaffold retained for reference while the imported backend is active.
 - `frontend/` - React five-stage editor interface.

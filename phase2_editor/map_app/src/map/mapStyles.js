@@ -1,15 +1,15 @@
 import { layerColors, scoreFields } from '../config/mapConfig';
 import { formatNumber } from '../utils/format';
 
-export function styleFeature(feature) {
+export function styleFeature(feature, isSelected = false) {
   const dataset = feature.properties.dataset;
   const baseColor = layerColors[dataset] || '#374151';
   return {
-    color: baseColor,
+    color: isSelected ? '#1d4ed8' : baseColor,
     fillColor: baseColor,
-    fillOpacity: dataset === 'all_candidate_sites' ? 0.22 : 0.34,
-    opacity: 0.9,
-    weight: dataset === 'all_candidate_sites' ? 1 : 2,
+    fillOpacity: isSelected ? 0.48 : dataset === 'all_candidate_sites' ? 0.22 : 0.34,
+    opacity: 0.95,
+    weight: isSelected ? 4 : dataset === 'all_candidate_sites' ? 1 : 2,
   };
 }
 
