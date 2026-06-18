@@ -28,6 +28,7 @@ export function App() {
   const [enabled, setEnabled] = useState(initialEnabledLayers);
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
   const [selectedSite, setSelectedSite] = useState(null);
   const [theme, setTheme] = useState('light');
   const [zoom, setZoom] = useState(7);
@@ -42,6 +43,7 @@ export function App() {
   useEffect(() => {
     async function load() {
       try {
+        setLoading(true);
         setError('');
         const appData = await loadAppData();
         setManifest(appData.manifest);
@@ -49,6 +51,8 @@ export function App() {
         setLayers(appData.layers);
       } catch (err) {
         setError(err.message);
+      } finally {
+        setLoading(false);
       }
     }
     load();
@@ -101,6 +105,7 @@ export function App() {
         directoryLayers={directoryLayers}
         enabled={enabled}
         error={error}
+        loading={loading}
         onBasemapChange={setBasemapId}
         onLayerToggle={handleLayerToggle}
         onQueryChange={setQuery}
@@ -114,6 +119,8 @@ export function App() {
       />
       <MapView
         activeBasemap={activeBasemap}
+        error={error}
+        loading={loading}
         onSelectSite={selectSite}
         onZoomChange={setZoom}
         query={query}

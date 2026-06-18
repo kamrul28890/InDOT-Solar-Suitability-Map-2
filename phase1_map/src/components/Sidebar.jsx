@@ -2,6 +2,7 @@ import { RefreshCw } from 'lucide-react';
 
 import { AppHeader } from './AppHeader';
 import { LayerDirectory } from './LayerDirectory';
+import { ProjectInfo } from './ProjectInfo';
 import { SearchBox } from './SearchBox';
 import { StatsGrid } from './StatsGrid';
 
@@ -10,6 +11,7 @@ export function Sidebar({
   directoryLayers,
   enabled,
   error,
+  loading,
   query,
   selectedSite,
   stats,
@@ -42,7 +44,9 @@ export function Sidebar({
         <RefreshCw size={18} aria-hidden="true" />
         Reload data
       </button>
-      {error ? <p className="error-message">API error: {error}</p> : null}
+      <ProjectInfo />
+      {loading ? <p className="status-message">Loading map data...</p> : null}
+      {error ? <p className="error-message">Data load error: {error}</p> : null}
     </aside>
   );
 }

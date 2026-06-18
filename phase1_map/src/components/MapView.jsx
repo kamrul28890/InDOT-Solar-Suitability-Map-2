@@ -67,7 +67,17 @@ function FeatureDots({ layers, selectedSite, onSelectSite }) {
   );
 }
 
-export function MapView({ activeBasemap, selectedSite, showDetailShapes, visibleLayers, onSelectSite, onZoomChange, query }) {
+export function MapView({
+  activeBasemap,
+  error,
+  loading,
+  selectedSite,
+  showDetailShapes,
+  visibleLayers,
+  onSelectSite,
+  onZoomChange,
+  query,
+}) {
   return (
     <section className="map-stage" aria-label="Interactive Indiana solar suitability map">
       <MapContainer center={INITIAL_CENTER} zoom={INITIAL_ZOOM} minZoom={MIN_ZOOM} className="map">
@@ -90,6 +100,16 @@ export function MapView({ activeBasemap, selectedSite, showDetailShapes, visible
           <FeatureDots layers={visibleLayers} onSelectSite={onSelectSite} selectedSite={selectedSite} />
         )}
       </MapContainer>
+      {loading || error ? (
+        <div className={`map-status ${error ? 'is-error' : ''}`} role="status">
+          <strong>{error ? 'Map data could not be loaded' : 'Loading map data'}</strong>
+          <span>
+            {error
+              ? 'Check that the public site includes manifest.json and all referenced GeoJSON layers.'
+              : 'Preparing the INDOT solar suitability layers.'}
+          </span>
+        </div>
+      ) : null}
     </section>
   );
 }

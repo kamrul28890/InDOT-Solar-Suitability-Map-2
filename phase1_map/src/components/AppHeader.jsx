@@ -1,13 +1,14 @@
 import { ChevronDown, Layers, Moon, Sun } from 'lucide-react';
 
 import { basemapLayers } from '../config/mapConfig';
+import { sidebarContent } from '../config/sidebarContent';
 
 export function AppHeader({ basemapId, onBasemapChange, theme, onThemeToggle }) {
   return (
     <header className="app-header">
       <div>
-        <span className="eyebrow">SPR 4862</span>
-        <h1>INDOT Solar Suitability Map</h1>
+        <span className="eyebrow">{sidebarContent.header.eyebrow}</span>
+        <h1>{sidebarContent.header.title}</h1>
       </div>
       <div className="header-actions">
         <details className="map-menu">

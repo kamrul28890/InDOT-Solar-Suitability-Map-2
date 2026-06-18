@@ -30,6 +30,8 @@ ROW_Scored/
 docs/*
 !docs/*.md
 !docs/.gitkeep
+!docs/deployment-plan/
+!docs/deployment-plan/*.md
 MEETING_*
 r_outputs/
 Implementation_Plan_SPR4862*.md

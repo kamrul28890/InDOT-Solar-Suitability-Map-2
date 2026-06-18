@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
+    "build:pages": "vite build",
+    "prepare:pages": "powershell -ExecutionPolicy Bypass -File scripts/prepare_pages_dist.ps1",
+    "publish:ready": "npm run build:pages && npm run prepare:pages",
     "preview": "vite preview --host 127.0.0.1",
     "test": "powershell -ExecutionPolicy Bypass -File scripts/check_project.ps1",
     "check": "vite build",

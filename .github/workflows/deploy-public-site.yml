@@ -1,0 +1,72 @@
+name: Deploy public map website
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "phase1_map/**"
+      - ".github/workflows/deploy-public-site.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+    env:
+      VITE_DATA_MODE: static
+      VITE_PUBLIC_BASE: /indot-solar-suitability-map/
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: phase1_map/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: phase1_map
+        run: npm ci
+
+      - name: Build static public site
+        working-directory: phase1_map
+        run: npm run publish:ready
+
+      - name: Publish to website repository
+        shell: pwsh
+        env:
+          DEPLOY_TOKEN: ${{ secrets.PUBLIC_SITE_DEPLOY_TOKEN }}
+          WEBSITE_REPO: s2hublab/indot-solar-suitability-map
+        run: |
+          if (-not $env:DEPLOY_TOKEN) {
+            throw "Missing PUBLIC_SITE_DEPLOY_TOKEN secret with write access to $env:WEBSITE_REPO."
+          }
+
+          $publishDir = Join-Path $env:RUNNER_TEMP "public-site"
+          git clone "https://x-access-token:$env:DEPLOY_TOKEN@github.com/$env:WEBSITE_REPO.git" $publishDir
+          if ($LASTEXITCODE -ne 0) { throw "Failed to clone website repository." }
+
+          Get-ChildItem -LiteralPath $publishDir -Force |
+            Where-Object { $_.Name -ne ".git" } |
+            Remove-Item -Recurse -Force
+
+          Get-ChildItem -LiteralPath "phase1_map/dist" -Force | ForEach-Object {
+            Copy-Item -LiteralPath $_.FullName -Destination $publishDir -Recurse -Force
+          }
+
+          Set-Location $publishDir
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+
+          if (-not (git diff --cached --quiet)) {
+            git commit -m "Deploy INDOT public map from $env:GITHUB_SHA"
+            git push origin HEAD:main
+          } else {
+            Write-Host "No public site changes to publish."
+          }
