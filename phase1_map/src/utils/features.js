@@ -1,11 +1,17 @@
-export function featureKey(feature, fallbackIndex = 0) {
+import { resolveLabelField } from '../config/displayDefaults';
+
+export function featureKey(feature, fallbackIndex = 0, layerConfig = {}) {
   const p = feature.properties;
-  return `${p.dataset}:${p.SPR_ID ?? fallbackIndex}:${p.Unit_Site ?? 'site'}`;
+  return `${p.dataset}:${p.feature_id ?? p.SPR_ID ?? fallbackIndex}:${siteLabel(feature, layerConfig)}`;
 }
 
-export function siteLabel(feature) {
+export function siteLabel(feature, layerConfig = {}) {
   const p = feature.properties;
-  return p.Unit_Site || `${p.Site_typ || 'Site'} ${p.SPR_ID ?? ''}`.trim();
+  const labelField = resolveLabelField(layerConfig);
+  if (labelField && p[labelField] !== null && p[labelField] !== undefined && p[labelField] !== '') {
+    return String(p[labelField]);
+  }
+  return p.Unit_Site || `${p.Site_typ || 'Site'} ${p.SPR_ID ?? ''}`.trim() || p.feature_id || 'Unnamed site';
 }
 
 export function featureCenter(feature) {

@@ -1,4 +1,4 @@
-import { ChevronDown, Layers, Moon, Sun } from 'lucide-react';
+import { ChevronDown, Layers, Moon, PencilRuler, Sun } from 'lucide-react';
 
 import { basemapLayers } from '../config/mapConfig';
 import { sidebarContent } from '../config/sidebarContent';
@@ -11,6 +11,10 @@ export function AppHeader({ basemapId, onBasemapChange, theme, onThemeToggle }) 
         <h1>{sidebarContent.header.title}</h1>
       </div>
       <div className="header-actions">
+        <a className="editor-link" href="#/editor" title="Open map editor">
+          <PencilRuler size={17} aria-hidden="true" />
+          <span>Map Editor</span>
+        </a>
         <details className="map-menu">
           <summary title="Map options">
             <Layers size={18} aria-hidden="true" />

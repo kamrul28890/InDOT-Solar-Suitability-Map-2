@@ -12,13 +12,27 @@ if (-not $python) {
 
 Set-Location $root
 
+function Invoke-Checked {
+  param(
+    [Parameter(Mandatory = $true)]
+    [scriptblock]$Command
+  )
+  & $Command
+  if ($LASTEXITCODE -ne 0) {
+    throw "Command failed with exit code $LASTEXITCODE."
+  }
+}
+
 Write-Host "Exporting app-ready data..."
-& $python scripts\export_app_data.py
+Invoke-Checked { & $python scripts\export_app_data.py }
 
 Write-Host "Running Python tests..."
-& $python -m pytest -q
+Invoke-Checked { & $python -m pytest -q }
+
+Write-Host "Running JavaScript tests..."
+Invoke-Checked { npm test }
 
 Write-Host "Building frontend..."
-npm run build
+Invoke-Checked { npm run build }
 
 Write-Host "Project checks completed."

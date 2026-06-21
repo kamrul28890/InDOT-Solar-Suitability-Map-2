@@ -1,21 +1,5 @@
 export const API_BASE = import.meta.env.VITE_API_BASE || '';
 
-export const layerColors = {
-  all_candidate_sites: '#59636f',
-  facility_scored: '#0f8b8d',
-  row_scored: '#b45309',
-};
-
-export const scoreFields = [
-  ['sol_s', 'Solar score'],
-  ['slp_s', 'Slope score'],
-  ['trn_s', 'Access score'],
-  ['evp_s', 'Evapotranspiration score'],
-  ['dem_s', 'Terrain / elevation score'],
-  ['fld_s', 'Flood score'],
-  ['lc_s', 'Land-cover score'],
-];
-
 export const basemapLayers = [
   {
     id: 'osm',

@@ -1,6 +1,5 @@
 import { Layers, MapPin } from 'lucide-react';
 
-import { layerColors } from '../config/mapConfig';
 import { siteLabel } from '../utils/features';
 
 export function LayerDirectory({ directoryLayers, enabled, selectedSite, onLayerToggle, onSiteSelect }) {
@@ -20,7 +19,7 @@ export function LayerDirectory({ directoryLayers, enabled, selectedSite, onLayer
                 onChange={(event) => onLayerToggle(layer.name, event.target.checked)}
                 onClick={(event) => event.stopPropagation()}
               />
-              <span className="swatch" style={{ backgroundColor: layerColors[layer.name] }} />
+              <span className="swatch" style={{ backgroundColor: layer.color }} />
               <span>{layer.title}</span>
               <small>{layer.count}</small>
             </summary>
@@ -37,15 +36,15 @@ export function LayerDirectory({ directoryLayers, enabled, selectedSite, onLayer
                         className={`site-row ${selectedSite?.key === key ? 'is-selected' : ''}`}
                         key={key}
                         onClick={() => onSiteSelect(feature, key)}
-                        title={`Zoom to ${siteLabel(feature)}`}
+                        title={`Zoom to ${siteLabel(feature, layer)}`}
                         type="button"
                       >
                         <MapPin size={15} aria-hidden="true" />
                         <span>
-                          <strong>{siteLabel(feature)}</strong>
+                          <strong>{siteLabel(feature, layer)}</strong>
                           <small>
                             SPR {feature.properties.SPR_ID ?? 'n/a'} |{' '}
-                            {feature.properties.Site_typ || feature.properties.layer_type || 'site'}
+                            {feature.properties.Site_typ || feature.properties.layer_type || feature.properties.dataset || 'site'}
                           </small>
                         </span>
                       </button>

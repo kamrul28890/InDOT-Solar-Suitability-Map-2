@@ -126,7 +126,32 @@ def write_geojson(gdf: gpd.GeoDataFrame, output_path: Path) -> None:
 
 
 def build_stats(gdf: gpd.GeoDataFrame, dataset: DatasetConfig, config: dict[str, Any]) -> dict[str, Any]:
-    score_fields = [field for field in config["score_fields"] if field in gdf.columns]
+    score_fields = [field for field in config.get("score_fields", []) if field in gdf.columns]
+    popup_label_map = {
+        "SPR_ID": "SPR ID",
+        "Site_typ": "Type",
+        "layer": "District",
+        "Solar_Mean": "Solar mean",
+    }
+    score_label_map = {
+        "sol_s": "Solar score",
+        "slp_s": "Slope score",
+        "trn_s": "Access score",
+        "evp_s": "Evapotranspiration score",
+        "dem_s": "Terrain / elevation score",
+        "fld_s": "Flood score",
+        "lc_s": "Land-cover score",
+    }
+    popup_fields = [
+        {
+            "field": field,
+            "label": popup_label_map[field],
+            "type": "number" if field == "Solar_Mean" else "text",
+            **({"precision": 0} if field == "Solar_Mean" else {}),
+        }
+        for field in popup_label_map
+        if field in gdf.columns
+    ]
     bounds = gdf.to_crs("EPSG:4326").total_bounds.tolist()
     stats: dict[str, Any] = {
         "name": dataset.name,
@@ -136,7 +161,17 @@ def build_stats(gdf: gpd.GeoDataFrame, dataset: DatasetConfig, config: dict[str,
         "bounds": [round(float(value), 6) for value in bounds],
         "source_valid_geometries": int(gdf["source_geometry_valid"].sum()),
         "fixed_geometries": int((~gdf["source_geometry_valid"]).sum()),
-        "score_fields": score_fields,
+        "geometry_type": gdf.geometry.geom_type.dropna().mode().iloc[0].lower() if not gdf.empty else "polygon",
+        "color": {
+            "all_candidate_sites": "#59636f",
+            "facility_scored": "#0f8b8d",
+            "row_scored": "#b45309",
+        }.get(dataset.name, "#2563eb"),
+        "label_field": "Unit_Site" if "Unit_Site" in gdf.columns else "",
+        "subgroup_field": "layer" if "layer" in gdf.columns else "",
+        "popup_fields": popup_fields,
+        "score_fields": [{"field": field, "label": score_label_map.get(field, field.replace("_", " ").strip().title())} for field in score_fields],
+        "score_color_field": None,
     }
     return stats
 
