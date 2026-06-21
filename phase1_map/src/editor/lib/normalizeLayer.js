@@ -1,37 +1,30 @@
 import { bbox, pointOnFeature } from '@turf/turf';
 
-import { DISPLAY_PALETTE, LEGACY_SCORE_FIELDS } from '../../config/displayDefaults';
+import { KEEP_FIELDS } from '../config/schema';
 import { repairGeometry } from './repairGeometry';
 
-export function slugifyLayerName(value) {
-  return String(value || 'layer')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '') || 'layer';
+function featureId(datasetName, sourceProps, index) {
+  return String(sourceProps?.feature_id || sourceProps?.SPR_ID || `${datasetName}_${index + 1}`);
 }
 
-function guessLabelField(fields) {
-  return ['Unit_Site', 'name', 'Name', 'Site_typ', 'SPR_ID'].find((field) => fields.some((item) => item.name === field)) || fields[0]?.name || '';
+// Columns shown in the Edit table: the known display fields plus score fields.
+function editableFields(dataset) {
+  const fields = dataset.display_fields.map((name) => ({ name, type: 'text' }));
+  for (const score of dataset.score_fields) {
+    fields.push({ name: score.field, type: 'number' });
+  }
+  return fields;
 }
 
-function popupFields(fields) {
-  return fields.slice(0, 10).map((field) => ({ field: field.name, label: field.name.replace(/_/g, ' '), type: field.type }));
-}
+// Apply the fixed known-dataset configuration to a parsed shapefile layer.
+// Geometry is repaired (guaranteed valid) and the contract fields the viewer
+// relies on are injected, mirroring scripts/export_app_data.py output.
+export async function normalizeLayer(rawLayer, dataset) {
+  if (!dataset) {
+    throw new Error('normalizeLayer requires a known dataset configuration.');
+  }
 
-function scoreFields(fields) {
-  const known = new Map(LEGACY_SCORE_FIELDS.map((field) => [field.field, field.label]));
-  return fields
-    .filter((field) => field.type === 'number' && (known.has(field.name) || /score|_s$/i.test(field.name)))
-    .map((field) => ({ field: field.name, label: known.get(field.name) || field.name.replace(/_/g, ' '), type: 'number' }));
-}
-
-function featureId(layerName, feature, index) {
-  return String(feature.properties?.feature_id || feature.properties?.SPR_ID || `${layerName}_${index + 1}`);
-}
-
-export async function normalizeLayer(rawLayer, index = 0) {
-  const name = slugifyLayerName(rawLayer.rawName);
+  const name = dataset.name;
   let validCount = 0;
   let fixedCount = 0;
   let escalatedCount = 0;
@@ -47,39 +40,43 @@ export async function normalizeLayer(rawLayer, index = 0) {
         escalatedCount += 1;
       }
     }
-    const normalizedFeature = {
-      type: 'Feature',
-      geometry: repaired.geometry,
-      properties: { ...(feature.properties || {}) },
-    };
+
+    const sourceProps = feature.properties || {};
+    const properties = {};
+    for (const key of KEEP_FIELDS) {
+      if (key in sourceProps) {
+        properties[key] = sourceProps[key];
+      }
+    }
+
+    const normalizedFeature = { type: 'Feature', geometry: repaired.geometry, properties };
     const center = pointOnFeature(normalizedFeature);
-    normalizedFeature.properties.feature_id = featureId(name, normalizedFeature, featureIndex);
-    normalizedFeature.properties.dataset = name;
-    normalizedFeature.properties.layer_title = rawLayer.rawName;
-    normalizedFeature.properties.layer_type = rawLayer.geometryType;
-    normalizedFeature.properties.center_longitude = center.geometry.coordinates[0];
-    normalizedFeature.properties.center_latitude = center.geometry.coordinates[1];
-    normalizedFeature.properties.source_geometry_valid = repaired.wasValid;
+    properties.feature_id = featureId(name, sourceProps, featureIndex);
+    properties.dataset = name;
+    properties.layer_title = dataset.title;
+    properties.layer_type = dataset.layer_type;
+    properties.center_longitude = center.geometry.coordinates[0];
+    properties.center_latitude = center.geometry.coordinates[1];
+    properties.source_geometry_valid = repaired.wasValid;
     normalizedFeatures.push(normalizedFeature);
   }
 
   const geojson = { type: 'FeatureCollection', features: normalizedFeatures };
   const layerBounds = normalizedFeatures.length ? bbox(geojson).map((value) => Number(value.toFixed(6))) : null;
-  const labelField = guessLabelField(rawLayer.fields);
 
   return {
     name,
     rawName: rawLayer.rawName,
-    title: rawLayer.rawName.replace(/[_-]/g, ' '),
-    layer_type: rawLayer.geometryType,
+    title: dataset.title,
+    layer_type: dataset.layer_type,
     geometry_type: rawLayer.geometryType,
-    color: DISPLAY_PALETTE[index % DISPLAY_PALETTE.length],
-    label_field: labelField,
-    subgroup_field: rawLayer.fields.some((field) => field.name === 'layer') ? 'layer' : '',
-    popup_fields: popupFields(rawLayer.fields),
-    score_fields: scoreFields(rawLayer.fields),
+    color: dataset.color,
+    label_field: dataset.label_field,
+    subgroup_field: dataset.subgroup_field,
+    popup_fields: dataset.popup_fields,
+    score_fields: dataset.score_fields,
     score_color_field: null,
-    fields: rawLayer.fields,
+    fields: editableFields(dataset),
     bounds: layerBounds,
     source_valid_geometries: validCount,
     fixed_geometries: fixedCount,

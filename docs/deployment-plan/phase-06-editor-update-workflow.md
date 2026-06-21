@@ -2,11 +2,15 @@
 
 ## Purpose
 
-The in-browser map editor exports a ZIP package with this layout:
+The in-browser map editor (v1) accepts the three INDOT project shapefiles
+(All Candidate Sites, Scored INDOT Facilities, Scored Right-of-Way Parcels) and exports a
+ZIP package with this fixed layout:
 
 ```text
 data/processed/manifest.json
-data/processed/<layer>.geojson
+data/processed/all_candidate_sites.geojson
+data/processed/facility_scored.geojson
+data/processed/row_scored.geojson
 README.txt
 ```
 
@@ -19,11 +23,11 @@ Use this path when the maintainer does not have a local Git setup.
 1. Open the source repository on github.com.
 2. Navigate to `phase1_map/data/processed/`.
 3. Choose `Add file` then `Upload files`.
-4. Drag in the exported `manifest.json` and all exported `*.geojson` files from the ZIP's `data/processed/` folder.
+4. Drag in the exported `manifest.json` and the three `*.geojson` files from the ZIP's `data/processed/` folder.
 5. Commit the upload to `main`.
 6. Wait for the public-site deployment action to finish.
 
-If the layer set shrank, delete now-unreferenced GeoJSON files from `phase1_map/data/processed/`. Stale unreferenced files are harmless because the manifest drives loading, but deleting them keeps the repo tidy.
+v1 always exports the same three layers, so this is a straightforward overwrite of the existing files — no files need to be deleted.
 
 ## Local Clone Path
 

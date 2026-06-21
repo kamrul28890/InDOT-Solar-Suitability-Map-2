@@ -29,7 +29,11 @@ export function UploadStep({ onLoaded }) {
       }}
     >
       <h2>Upload shapefiles</h2>
-      <p>Drop a shapefile ZIP or loose `.shp`, `.dbf`, `.shx`, and `.prj` components. All processing stays in this browser.</p>
+      <p>
+        Drop the three INDOT shapefiles (All Candidate Sites, Scored INDOT Facilities, Scored Right-of-Way Parcels) as a
+        ZIP or as loose <code>.shp</code>, <code>.dbf</code>, <code>.shx</code>, and <code>.prj</code> components. All
+        processing stays in this browser.
+      </p>
       <label className="file-picker">
         Select files
         <input

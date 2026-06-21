@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
 
+import { DATASET_ORDER, matchDataset } from './config/schema';
 import { buildUpdatePackage } from './lib/buildPackage';
 import { normalizeLayer } from './lib/normalizeLayer';
 import { validateProject } from './lib/validate';
-import { ConfigureStep } from './steps/ConfigureStep';
 import { EditStep } from './steps/EditStep';
 import { PreviewStep } from './steps/PreviewStep';
 import { UploadStep } from './steps/UploadStep';
 
-const steps = ['Upload', 'Configure', 'Edit', 'Validate', 'Preview & Export'];
+const steps = ['Upload', 'Edit', 'Validate', 'Preview & Export'];
 
 export default function EditorPage() {
   const [activeStep, setActiveStep] = useState(0);
@@ -44,9 +44,30 @@ export default function EditorPage() {
     setProcessing(true);
     setError('');
     try {
+      const matches = new Map();
+      const unknown = [];
+      for (const layer of parsedLayers) {
+        const dataset = matchDataset(layer.rawName);
+        if (dataset) {
+          matches.set(dataset.name, { layer, dataset });
+        } else {
+          unknown.push(layer.rawName);
+        }
+      }
+      if (unknown.length) {
+        throw new Error(
+          `Unrecognized shapefile(s): ${unknown.join(', ')}. This editor accepts the three INDOT datasets only.`
+        );
+      }
+      const missing = DATASET_ORDER.filter((name) => !matches.has(name));
+      if (missing.length) {
+        throw new Error(`Missing required dataset(s): ${missing.join(', ')}. Upload all three INDOT shapefiles together.`);
+      }
+
       const normalized = [];
-      for (const [index, layer] of parsedLayers.entries()) {
-        normalized.push(await normalizeLayer(layer, index));
+      for (const name of DATASET_ORDER) {
+        const { layer, dataset } = matches.get(name);
+        normalized.push(await normalizeLayer(layer, dataset));
       }
       setLayers(normalized);
       setActiveStep(1);
@@ -110,9 +131,8 @@ export default function EditorPage() {
       {processing ? <p className="status-message">Reading shapefiles and repairing geometries...</p> : null}
 
       {activeStep === 0 ? <UploadStep onLoaded={handleParsedLayers} /> : null}
-      {activeStep === 1 ? <ConfigureStep layers={layers} onLayerChange={updateLayer} /> : null}
-      {activeStep === 2 ? <EditStep layers={layers} onCellChange={updateFeature} /> : null}
-      {activeStep === 3 ? (
+      {activeStep === 1 ? <EditStep layers={layers} onCellChange={updateFeature} /> : null}
+      {activeStep === 2 ? (
         <section className="editor-panel">
           <h2>Validate</h2>
           <div className="validation-grid">
@@ -129,7 +149,7 @@ export default function EditorPage() {
           <IssueList validation={validation} />
         </section>
       ) : null}
-      {activeStep === 4 ? (
+      {activeStep === 3 ? (
         <PreviewStep layers={layers} manifest={manifest} validation={validation} onDownload={downloadPackage} />
       ) : null}
 

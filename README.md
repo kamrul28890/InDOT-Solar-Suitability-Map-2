@@ -77,7 +77,7 @@ Open the browser-only update editor:
 http://127.0.0.1:5173/#/editor
 ```
 
-The editor accepts shapefile ZIPs or loose shapefile components, repairs invalid geometries in the browser, lets maintainers configure layer display and attributes, previews the result, and exports a drop-in update ZIP for `phase1_map/data/processed/`. See `docs/deployment-plan/phase-06-editor-update-workflow.md` for the GitHub upload and local-clone update paths.
+The editor (v1) accepts the three known INDOT shapefiles (All Candidate Sites, Scored INDOT Facilities, Scored Right-of-Way Parcels) as a ZIP or loose components, repairs invalid geometries in the browser, lets maintainers edit attribute values, validates and previews the result, and exports a drop-in update ZIP for `phase1_map/data/processed/`. See `docs/deployment-plan/phase-06-editor-update-workflow.md` for the GitHub upload and local-clone update paths.
 
 Useful Phase 1 API endpoints:
 
