@@ -2,16 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { MapView } from './components/MapView';
 import { Sidebar } from './components/Sidebar';
+import { layerLookup } from './config/displayDefaults';
 import { BASEMAP_STORAGE_KEY, DETAIL_ZOOM, basemapLayers } from './config/mapConfig';
 import { loadAppData } from './services/api';
 import { featureCenter, siteLabel } from './utils/features';
 import { featureMatches, groupFeaturesByLayer } from './utils/search';
-
-const initialEnabledLayers = {
-  all_candidate_sites: true,
-  facility_scored: true,
-  row_scored: true,
-};
 
 function storedBasemapId() {
   if (typeof window === 'undefined') {
@@ -25,7 +20,7 @@ export function App() {
   const [manifest, setManifest] = useState(null);
   const [stats, setStats] = useState(null);
   const [layers, setLayers] = useState({});
-  const [enabled, setEnabled] = useState(initialEnabledLayers);
+  const [enabled, setEnabled] = useState({});
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -49,6 +44,7 @@ export function App() {
         setManifest(appData.manifest);
         setStats(appData.stats);
         setLayers(appData.layers);
+        setEnabled(Object.fromEntries((appData.manifest?.layers || []).map((layer) => [layer.name, true])));
       } catch (err) {
         setError(err.message);
       } finally {
@@ -75,6 +71,7 @@ export function App() {
 
   const visibleCount = visibleLayers.reduce((sum, [, layer]) => sum + layer.features.length, 0);
   const directoryLayers = useMemo(() => groupFeaturesByLayer(layers, manifest, query), [layers, manifest, query]);
+  const layerConfigByName = useMemo(() => layerLookup(manifest), [manifest]);
   const activeBasemap = basemapLayers.find((layer) => layer.id === basemapId) || basemapLayers[0];
   const showDetailShapes = zoom >= DETAIL_ZOOM;
 
@@ -93,7 +90,7 @@ export function App() {
       key,
       latitude: center.latitude,
       longitude: center.longitude,
-      label: siteLabel(feature),
+      label: siteLabel(feature, layerConfigByName[feature.properties.dataset]),
       targetZoom,
     });
   }
@@ -126,6 +123,7 @@ export function App() {
         query={query}
         selectedSite={selectedSite}
         showDetailShapes={showDetailShapes}
+        manifest={manifest}
         visibleLayers={visibleLayers}
       />
     </main>

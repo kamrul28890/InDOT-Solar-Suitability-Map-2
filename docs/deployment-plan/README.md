@@ -23,6 +23,7 @@ The first public release is intentionally map-only. It should present the curren
 - Phase 3: static site architecture: `phase-03-static-site-architecture.md`
 - Phase 4: deployment workflow: `phase-04-deployment-workflow.md`
 - Phase 5: maintainer handoff: `phase-05-maintainer-handoff.md`
+- Phase 6: editor update workflow: `phase-06-editor-update-workflow.md`
 
 ## Overall Acceptance Criteria
 
@@ -42,3 +43,4 @@ These documents are planning documents only. They define decisions, architecture
 - Static data mode has been added to the Phase 1 map so the public site can load processed GeoJSON without FastAPI.
 - A Pages artifact preparation step copies `phase1_map/data/processed` into the built `dist` folder.
 - A source-repo GitHub Actions workflow has been added to publish the built artifact to the public website repo after a deploy token is configured.
+- An in-browser editor route can export drop-in `data/processed/` update packages for web upload or local-clone application.

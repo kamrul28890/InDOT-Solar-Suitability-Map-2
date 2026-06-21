@@ -2,7 +2,7 @@
 
 This repository contains the SPR 4862 INDOT solar suitability mapping work. It is organized as a two-phase workspace:
 
-- `phase1_map/` is the completed non-editor web map package. It contains the FastAPI layer API, React/Leaflet map, processed GeoJSON data, validation scripts, documentation, and Windows sharing package assets.
+- `phase1_map/` is the public web map package. It contains the FastAPI layer API, React/Leaflet map, processed GeoJSON data, validation scripts, documentation, Windows sharing package assets, and a static in-browser shapefile editor at `/#/editor`.
 - `phase2_editor/` is the editor-mode application. It adds a local workflow for importing INDOT shapefile folders, editing field mappings and records, validating changes, previewing the map, and exporting a shareable package.
 
 The root folder is intentionally light. Most commands should be run from one of the phase folders.
@@ -70,6 +70,14 @@ Open:
 ```text
 http://127.0.0.1:5173
 ```
+
+Open the browser-only update editor:
+
+```text
+http://127.0.0.1:5173/#/editor
+```
+
+The editor (v1) accepts the three known INDOT shapefiles (All Candidate Sites, Scored INDOT Facilities, Scored Right-of-Way Parcels) as a ZIP or loose components, repairs invalid geometries in the browser, lets maintainers edit attribute values, validates and previews the result, and exports a drop-in update ZIP for `phase1_map/data/processed/`. See `docs/deployment-plan/phase-06-editor-update-workflow.md` for the GitHub upload and local-clone update paths.
 
 Useful Phase 1 API endpoints:
 
