@@ -755,6 +755,13 @@ h2 {
   margin: 0.2rem 0 0;
 }
 
+.editor-header-controls {
+  align-items: end;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: end;
+}
+
 .back-link {
   color: #2563eb;
   font-weight: 700;
@@ -897,7 +904,8 @@ h2 {
 
 .table-header,
 .editor-footer,
-.pagination {
+.pagination,
+.step-actions {
   align-items: center;
   display: flex;
   gap: 1rem;
@@ -967,17 +975,33 @@ h2 {
 }
 
 .editor-footer {
+  background: rgba(248, 250, 252, 0.96);
+  border-top: 1px solid #e5e7eb;
+  bottom: 0;
   margin: 0 auto;
   max-width: 1380px;
+  padding: 0.75rem 0;
+  position: sticky;
+  z-index: 20;
+}
+
+.editor-footer .step-actions {
+  width: 100%;
 }
 
 @media (max-width: 760px) {
   .editor-header,
   .table-header,
   .editor-footer,
-  .pagination {
+  .pagination,
+  .step-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .editor-header-controls {
+    justify-items: stretch;
+    width: 100%;
   }
 
   .editor-shell {

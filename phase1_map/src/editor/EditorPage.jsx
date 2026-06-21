@@ -79,6 +79,14 @@ export default function EditorPage() {
     await buildUpdatePackage({ manifest, layers });
   }
 
+  function previousStep() {
+    setActiveStep((current) => Math.max(0, current - 1));
+  }
+
+  function nextStep() {
+    setActiveStep((current) => Math.min(steps.length - 1, current + 1));
+  }
+
   return (
     <main className="editor-shell">
       <header className="editor-header">
@@ -86,13 +94,16 @@ export default function EditorPage() {
           <a href="#/" className="back-link">Back to map</a>
           <h1>Map Editor</h1>
         </div>
-        <ol className="editor-steps">
-          {steps.map((step, index) => (
-            <li className={index === activeStep ? 'is-active' : index < activeStep ? 'is-done' : ''} key={step}>
-              {step}
-            </li>
-          ))}
-        </ol>
+        <div className="editor-header-controls">
+          <ol className="editor-steps">
+            {steps.map((step, index) => (
+              <li className={index === activeStep ? 'is-active' : index < activeStep ? 'is-done' : ''} key={step}>
+                {step}
+              </li>
+            ))}
+          </ol>
+          <StepActions activeStep={activeStep} onBack={previousStep} onNext={nextStep} />
+        </div>
       </header>
 
       {error ? <p className="error-message">{error}</p> : null}
@@ -124,19 +135,27 @@ export default function EditorPage() {
 
       {activeStep > 0 ? (
         <footer className="editor-footer">
-          <button className="secondary-button" type="button" onClick={() => setActiveStep((current) => Math.max(0, current - 1))}>
-            Back
-          </button>
-          <button
-            className="primary-button"
-            type="button"
-            onClick={() => setActiveStep((current) => Math.min(steps.length - 1, current + 1))}
-          >
-            {activeStep === steps.length - 1 ? 'Review package' : 'Next'}
-          </button>
+          <StepActions activeStep={activeStep} onBack={previousStep} onNext={nextStep} />
         </footer>
       ) : null}
     </main>
+  );
+}
+
+function StepActions({ activeStep, onBack, onNext }) {
+  if (activeStep === 0) {
+    return null;
+  }
+  const nextLabel = activeStep === steps.length - 1 ? 'Review package' : `Next: ${steps[activeStep + 1]}`;
+  return (
+    <div className="step-actions">
+      <button className="secondary-button" type="button" onClick={onBack}>
+        Back
+      </button>
+      <button className="primary-button" type="button" onClick={onNext}>
+        {nextLabel}
+      </button>
+    </div>
   );
 }
 
