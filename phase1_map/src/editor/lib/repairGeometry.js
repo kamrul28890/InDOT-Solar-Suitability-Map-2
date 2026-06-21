@@ -1,13 +1,8 @@
-import 'jsts/dist/jsts.min.js';
 import { cleanCoords, rewind } from '@turf/turf';
-
-function jstsApi() {
-  const api = globalThis.jsts;
-  if (!api) {
-    throw new Error('Geometry validation library did not load.');
-  }
-  return api;
-}
+import GeoJSONReader from 'jsts/org/locationtech/jts/io/GeoJSONReader.js';
+import GeoJSONWriter from 'jsts/org/locationtech/jts/io/GeoJSONWriter.js';
+import IsValidOp from 'jsts/org/locationtech/jts/operation/valid/IsValidOp.js';
+import BufferOp from 'jsts/org/locationtech/jts/operation/buffer/BufferOp.js';
 
 function normalizeGeometry(geometry) {
   const cleaned = cleanCoords({ type: 'Feature', properties: {}, geometry });
@@ -16,12 +11,10 @@ function normalizeGeometry(geometry) {
 }
 
 function readGeometry(geometry) {
-  const { GeoJSONReader } = jstsApi().io;
   return new GeoJSONReader().read(geometry);
 }
 
 function writeGeometry(geometry) {
-  const { GeoJSONWriter } = jstsApi().io;
   return new GeoJSONWriter().write(geometry);
 }
 
@@ -29,7 +22,6 @@ export function isGeometryValid(geometry) {
   if (!geometry) {
     return false;
   }
-  const { IsValidOp } = jstsApi().operation.valid;
   return new IsValidOp(readGeometry(geometry)).isValid();
 }
 
@@ -50,17 +42,8 @@ export async function repairGeometry(geom) {
     return { geometry, wasValid: true, method: 'none' };
   }
 
-  const api = jstsApi();
-  const geometryFixer = api.geom?.util?.GeometryFixer || api.operation?.valid?.GeometryFixer;
-  if (geometryFixer) {
-    const fixed = normalizeGeometry(writeGeometry(geometryFixer.fix(readGeometry(geometry))));
-    if (isGeometryValid(fixed)) {
-      return { geometry: fixed, wasValid: false, method: 'GeometryFixer' };
-    }
-  }
-
   if (geometry.type.includes('Polygon')) {
-    const buffered = normalizeGeometry(writeGeometry(readGeometry(geometry).buffer(0)));
+    const buffered = normalizeGeometry(writeGeometry(BufferOp.bufferOp(readGeometry(geometry), 0)));
     if (isGeometryValid(buffered)) {
       return { geometry: buffered, wasValid: false, method: 'buffer0' };
     }
