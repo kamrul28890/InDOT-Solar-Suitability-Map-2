@@ -20,7 +20,10 @@ Those files are drop-in replacements for `phase1_map/data/processed/`. Once comm
 
 Use this path when the maintainer does not have a local Git setup.
 
-1. Open the source repository on github.com.
+1. Open https://github.com/s2hublab/InDoT-map-project on github.com. (This is the
+   maintainer repo wired to publish the live site — `PUBLIC_SITE_DEPLOY_TOKEN` is
+   configured here. Uploads to the `kamrul28890/InDoT-map-project` mirror will build but
+   will not publish.)
 2. Navigate to `phase1_map/data/processed/`.
 3. Choose `Add file` then `Upload files`.
 4. Drag in the exported `manifest.json` and the three `*.geojson` files from the ZIP's `data/processed/` folder.
@@ -39,10 +42,10 @@ Expand-Archive .\INDOT_Map_Update_YYYYMMDDTHHMMSS.zip -DestinationPath .\map-upd
 git status --short
 git add phase1_map\data\processed
 git commit -m "Update public map data"
-git push
+git push lab main
 ```
 
-The push to `main` triggers `.github/workflows/deploy-public-site.yml`, which builds the static site and publishes it to `s2hublab/indot-solar-suitability-map` when `PUBLIC_SITE_DEPLOY_TOKEN` is configured.
+Push to the `lab` remote (`s2hublab/InDoT-map-project`) specifically — that is the repo with `PUBLIC_SITE_DEPLOY_TOKEN` configured. The push triggers `.github/workflows/deploy-public-site.yml`, which builds the static site and publishes it to `s2hublab/indot-solar-suitability-map`.
 
 ## Verification
 
