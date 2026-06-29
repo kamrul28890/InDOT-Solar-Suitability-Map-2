@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     env:
       VITE_DATA_MODE: static
       VITE_PUBLIC_BASE: /InDOT-Solar-Suitability-Map-2/
