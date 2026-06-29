@@ -9,7 +9,13 @@ release/
 logs/
 
 # Local runtime/session output
-phase2_editor/sessions/
+.playwright-mcp/
+archive/local-generated/
+archive/phase2_editor/sessions/
+archive/legacy-tools/indot-shapefile-editor/.pytest_cache/
+archive/legacy-tools/indot-shapefile-editor/outputs/
+archive/legacy-tools/indot-shapefile-editor/sessions/
+archive/legacy-repos/indot-website/
 
 # Generated handoff/release bundles
 INDOT_Professor_Handoff_*.zip

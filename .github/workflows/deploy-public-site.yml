@@ -1,4 +1,4 @@
-name: Deploy public map website
+﻿name: Deploy public map website
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - "phase1_map/**"
+      - "website/**"
       - ".github/workflows/deploy-public-site.yml"
 
 permissions:
@@ -28,14 +28,14 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: phase1_map/package-lock.json
+          cache-dependency-path: website/package-lock.json
 
       - name: Install frontend dependencies
-        working-directory: phase1_map
+        working-directory: website
         run: npm ci
 
       - name: Build static public site
-        working-directory: phase1_map
+        working-directory: website
         run: npm run publish:ready
 
       - name: Publish to website repository
@@ -52,7 +52,7 @@ jobs:
             Where-Object { $_.Name -ne ".git" } |
             Remove-Item -Recurse -Force
 
-          Get-ChildItem -LiteralPath "phase1_map/dist" -Force | ForEach-Object {
+          Get-ChildItem -LiteralPath "website/dist" -Force | ForEach-Object {
             Copy-Item -LiteralPath $_.FullName -Destination $publishDir -Recurse -Force
           }
 
@@ -74,3 +74,4 @@ jobs:
         run: |
           Write-Warning "PUBLIC_SITE_DEPLOY_TOKEN is not configured. Build passed, but automatic cross-repo publishing was skipped."
           Write-Warning "Add a token with write access to s2hublab/indot-solar-suitability-map to enable automatic website updates."
+

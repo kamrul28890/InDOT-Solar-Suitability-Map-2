@@ -1,0 +1,39 @@
+{
+  "name": "indot-solar-suitability-map",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "build:pages": "vite build",
+    "prepare:pages": "powershell -ExecutionPolicy Bypass -File scripts/prepare_pages_dist.ps1",
+    "publish:ready": "npm run build:pages && npm run prepare:pages",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "test:project": "powershell -ExecutionPolicy Bypass -File scripts/check_project.ps1",
+    "check": "vite build",
+    "check:full": "powershell -ExecutionPolicy Bypass -File scripts/check_project.ps1",
+    "release:windows": "powershell -ExecutionPolicy Bypass -File scripts/build_windows_release.ps1"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/sora": "^5.2.8",
+    "@turf/turf": "^7.3.5",
+    "@vitejs/plugin-react": "latest",
+    "geos-wasm": "^3.1.1",
+    "jsts": "^2.12.1",
+    "jszip": "^3.10.1",
+    "leaflet": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-leaflet": "latest",
+    "react-router-dom": "^7.18.0",
+    "shpjs": "^6.2.0",
+    "typescript": "latest",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.9"
+  }
+}

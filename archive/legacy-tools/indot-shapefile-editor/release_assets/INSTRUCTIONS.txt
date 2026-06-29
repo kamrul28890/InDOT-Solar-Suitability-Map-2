@@ -1,0 +1,14 @@
+INDOT Solar Editor - Instructions
+
+1. Unzip the package to a local folder.
+2. Double-click Run_Editor.bat.
+3. Your browser should open automatically.
+4. Select the parent folder containing:
+   - All_Candidate_Sites
+   - Facility_Scored
+   - ROW_Scored
+5. Follow the five stages: Import, Fields, Edit, Validate, Preview and Export.
+6. Download the generated map ZIP.
+7. Unzip the generated map ZIP and upload its contents to the public web folder.
+
+The editor does not modify the original shapefiles.

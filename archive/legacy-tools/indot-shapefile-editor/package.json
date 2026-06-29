@@ -1,0 +1,25 @@
+{
+  "name": "indot-shapefile-editor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5174",
+    "build": "vite build",
+    "api": ".\\.venv\\Scripts\\python.exe -m uvicorn editor_backend.main:app --host 127.0.0.1 --port 8010 --reload",
+    "test:api": ".\\.venv\\Scripts\\python.exe -m pytest",
+    "check": "npm run build && npm run test:api",
+    "release:windows": "powershell -ExecutionPolicy Bypass -File scripts/build_windows_release.ps1"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "typescript": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "leaflet": "latest",
+    "react-leaflet": "latest",
+    "lucide-react": "latest"
+  },
+  "devDependencies": {}
+}

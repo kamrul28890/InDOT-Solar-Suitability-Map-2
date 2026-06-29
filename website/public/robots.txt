@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://s2hublab.github.io/indot-solar-suitability-map/sitemap.xml
